@@ -1,4 +1,5 @@
 .island {
+    all: unset;
     position: fixed;      
     bottom: 20px;         
     right: 20px;          
@@ -11,18 +12,33 @@
 }
 
 .up-btn{
+    all: unset;
 
 }
 
 .down-btn{
+    all: unset;
 
 }
 
 .create-mark{
+    all: unset;
 
 }
 
 .remove-mark{
+    all: unset;
 
 }
 
+.marker{
+    all: unset;
+    background-color: red;
+    color: red;
+    position: fixed; /* Fixed to the viewport */
+    right: 5px;      /* Position next to the scrollbar */
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    z-index: 1000;
+}
