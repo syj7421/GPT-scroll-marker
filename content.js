@@ -1,79 +1,41 @@
-// const markersMap = new Map(); // Store markers for the main scrollable element
-
-// function getScrollableElement() {
-//     let scrollableElement = null;
-//     document.querySelectorAll('*').forEach(el => {
-//         if (
-//             el.scrollHeight > el.clientHeight &&
-//             (getComputedStyle(el).overflowY === 'scroll' || getComputedStyle(el).overflowY === 'auto')
-//         ) {
-//             scrollableElement = el;
-//         }
-//     });
-
-//     // Fallback to document.scrollingElement or document.body
-//     return scrollableElement || document.scrollingElement || document.body;
-// }
-
-// function createMarker() {
-//     console.log("Marker created");
-//     const scrollableElement = getScrollableElement();
-//     const scrollY = scrollableElement.scrollTop;
-//     const scrollableHeight = scrollableElement.scrollHeight;
-//     const viewportHeight = scrollableElement.clientHeight;
-
-//     // Calculate the marker's position as a percentage of the scrollable content
-//     const markerRatio = scrollY / (scrollableHeight - viewportHeight);
-//     const marker = document.createElement('div');
-//     marker.classList.add('marker');
-//     marker.style.position = 'fixed'; // Fixed to the viewport
-//     marker.style.right = '0px'; // Adjust to be next to the scroll bar
-//     marker.style.width = '8px'; // Marker width
-//     marker.style.height = '8px'; // Marker height
-//     marker.style.backgroundColor = 'red'; // Color for visibility
-//     marker.style.borderRadius = '50%';
-//     marker.dataset.ratio = markerRatio; // Store the ratio for repositioning
-
-//     // Append marker to the document
-//     document.body.appendChild(marker);
-
-//     updateMarkerPosition(marker, scrollableElement);
-
-//     // Save marker to map for dynamic updates
-//     if (!markersMap.has(scrollableElement)) {
-//         markersMap.set(scrollableElement, []);
-//     }
-//     markersMap.get(scrollableElement).push(marker);
-// }
-
-// function updateMarkerPosition(marker, scrollableElement) {
-//     const markerRatio = parseFloat(marker.dataset.ratio); // Marker ratio of the scrollable area
-//     const viewportHeight = scrollableElement.clientHeight; // Visible area height
-//     const scrollBarHeight = viewportHeight / scrollableElement.scrollHeight * viewportHeight; // Actual scrollbar height
-
-//     // Calculate position relative to the top of the scrollbar
-//     const markerPosition = markerRatio * (viewportHeight - scrollBarHeight);
-
-//     // Position marker at the top of the corresponding scrollbar position
-//     marker.style.top = `${markerPosition}px`;
-// }
-
-// function updateAllMarkers() {
-//     markersMap.forEach((markers, scrollableElement) => {
-//         markers.forEach(marker => updateMarkerPosition(marker, scrollableElement));
-//     });
-// }
-
-// // Recalculate marker positions on scroll and window resize
-// window.addEventListener('scroll', updateAllMarkers);
-// window.addEventListener('resize', updateAllMarkers);
-
-
 function createMarker() {
     const scrollables = getScrollableElement();
     const mainPage = scrollables.at(-1); // Safely get the last element
+
+    // Get current scroll position
+    const currentScrollPosition = mainPage.scrollTop;
     console.log("Total height:", mainPage.scrollHeight);
-    console.log("Current position relative to top:", mainPage.scrollTop);
+    console.log("Current position relative to top:", currentScrollPosition);
+
+    // Create a marker button
+    const marker = document.createElement('button');
+    marker.textContent = "●";
+    marker.classList.add('scroll-marker');
+
+    // Style the marker
+    marker.style.position = 'absolute';
+    marker.style.right = '10px'; // Position next to the scrollbar
+    marker.style.top = `${(currentScrollPosition / mainPage.scrollHeight) * 100}%`; // Place it proportional to the scroll position
+    marker.style.transform = 'translateY(-50%)'; // Center the marker vertically
+    marker.style.zIndex = '1000'; // Ensure it's above other elements
+    marker.style.cursor = 'pointer';
+    marker.style.background = '#FF5722';
+    marker.style.border = 'none';
+    marker.style.color = '#FFF';
+    marker.style.borderRadius = '50%';
+    marker.style.width = '20px';
+    marker.style.height = '20px';
+
+    // Add click event to teleport to the marker position
+    marker.addEventListener('click', () => {
+        mainPage.scrollTo({
+            top: currentScrollPosition,
+            behavior: 'smooth',
+        });
+    });
+
+    // Append the marker to the body (you can change this to the scrollable container if needed)
+    document.body.appendChild(marker);
 }
 
 function getScrollableElement() {
