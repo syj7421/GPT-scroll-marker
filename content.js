@@ -1,5 +1,3 @@
-// File: scrollMarkerManager.js
-
 const markers = [];
 let currentMarkerIndex = 0;
 
@@ -19,20 +17,34 @@ function handleCreateMarker() {
     const mainScrollable = getMainScrollableElement();
     if (!mainScrollable) return;
 
-    const scrollPosition = mainScrollable.scrollTop;
-    const effectiveHeight = getEffectiveHeight(mainScrollable);
+    const scrollPosition = mainScrollable.scrollTop; // Current scroll position
+    const totalScrollableHeight = mainScrollable.scrollHeight; // Total scrollable content height
 
-    const marker = createMarkerElement(scrollPosition, effectiveHeight);
+    // Create a marker with the correct position
+    const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable);
+
+    // Add click event to scroll to the marker's position
     marker.addEventListener('click', () => scrollToPosition(mainScrollable, scrollPosition));
 
+    // Add marker to the list and update DOM
     markers.push({ marker, scrollPosition });
-    updateMarkers();
+    updateMarkers(mainScrollable);
 }
 
 // Navigate markers in the specified direction
 function navigateMarkers(direction) {
     if (!markers.length) return;
     currentMarkerIndex = (currentMarkerIndex + direction + markers.length) % markers.length;
+
+    // Scroll to the marker's position
+    const mainScrollable = getMainScrollableElement();
+    if (mainScrollable) {
+        const { scrollPosition, visible } = calculateMarkerVisibility(markers[currentMarkerIndex], mainScrollable);
+        if (!visible) {
+            scrollToPosition(mainScrollable, scrollPosition);
+        }
+    }
+
     markers[currentMarkerIndex].marker.click();
 }
 
@@ -55,21 +67,42 @@ function getMainScrollableElement() {
 
 // Calculate the scrollable height, excluding the footer
 function getEffectiveHeight(element) {
-    return element.scrollHeight - (document.querySelector('#composer-background')?.offsetHeight || 0);
+    const querybox = document.querySelector('#composer-background');
+    if (!querybox) {
+        console.log("Footer (#composer-background) does not exist.");
+        return element.clientHeight; // Use clientHeight for visible area
+    }
+
+    const footerHeight = querybox.offsetHeight || 0;
+
+    // Subtract footerHeight from clientHeight for the effective visible area
+    return element.clientHeight - footerHeight;
 }
 
 // Update DOM markers and sort them
-function updateMarkers() {
+function updateMarkers(scrollableContainer) {
     markers.sort((a, b) => a.scrollPosition - b.scrollPosition);
-    document.querySelectorAll('.scroll-marker').forEach(el => el.remove());
-    markers.forEach(({ marker }) => document.body.appendChild(marker));
+
+    // Remove existing markers
+    scrollableContainer.querySelectorAll('.scroll-marker').forEach(el => el.remove());
+
+    // Append sorted markers to the scrollable container
+    markers.forEach(({ marker }) => scrollableContainer.appendChild(marker));
 }
 
 // Create a marker element
-function createMarkerElement(scrollPosition, effectiveHeight) {
+function createMarkerElement(scrollPosition, totalScrollableHeight, scrollableElement) {
     const marker = document.createElement('button');
     marker.className = 'scroll-marker';
-    marker.style.top = `${(scrollPosition / effectiveHeight) * 100}%`;
+
+    // Calculate the position of the marker
+    marker.style.position = 'absolute';
+    marker.style.top = `${(scrollPosition / totalScrollableHeight) * 100}%`; // Relative to scroll height
+
+    // Calculate the scroll bar width and adjust marker placement
+    const scrollBarWidth = scrollableElement.offsetWidth - scrollableElement.clientWidth;
+    marker.style.right = `${scrollBarWidth + 5}px`; // Place next to the scroll bar with a small offset
+
     return marker;
 }
 
@@ -85,8 +118,25 @@ function createControlButton(label, onClick) {
 // Reset markers on specific events
 document.addEventListener('click', ({ target }) => {
     if (target.closest('nav') || target.closest('button[aria-label="New chat"]')) {
-        document.querySelectorAll('.scroll-marker').forEach(el => el.remove());
+        const mainScrollable = getMainScrollableElement();
+        if (mainScrollable) {
+            mainScrollable.querySelectorAll('.scroll-marker').forEach(el => el.remove());
+        }
         markers.length = 0;
         currentMarkerIndex = 0;
     }
 });
+
+// Calculate marker visibility and position
+function calculateMarkerVisibility(marker, scrollableElement) {
+    const { scrollPosition } = marker;
+    const scrollTop = scrollableElement.scrollTop;
+    const clientHeight = scrollableElement.clientHeight;
+
+    const visibleTop = scrollTop;
+    const visibleBottom = scrollTop + clientHeight;
+
+    const visible = scrollPosition >= visibleTop && scrollPosition <= visibleBottom;
+
+    return { scrollPosition, visible };
+}
