@@ -12,19 +12,8 @@ function createMarker() {
     marker.textContent = "●";
     marker.classList.add('scroll-marker');
 
-    // Style the marker
-    marker.style.position = 'absolute';
-    marker.style.right = '10px'; // Position next to the scrollbar
-    marker.style.top = `${(currentScrollPosition / mainPage.scrollHeight) * 100}%`; // Place it proportional to the scroll position
-    marker.style.transform = 'translateY(-50%)'; // Center the marker vertically
-    marker.style.zIndex = '1000'; // Ensure it's above other elements
-    marker.style.cursor = 'pointer';
-    marker.style.background = '#FF5722';
-    marker.style.border = 'none';
-    marker.style.color = '#FFF';
-    marker.style.borderRadius = '50%';
-    marker.style.width = '20px';
-    marker.style.height = '20px';
+    // Place marker proportionally based on the scroll position
+    marker.style.top = `${(currentScrollPosition / (mainPage.scrollHeight - mainPage.clientHeight)) * 100}%`;
 
     // Add click event to teleport to the marker position
     marker.addEventListener('click', () => {
@@ -34,8 +23,15 @@ function createMarker() {
         });
     });
 
-    // Append the marker to the body (you can change this to the scrollable container if needed)
-    document.body.appendChild(marker);
+    // Insert the marker into the sorted `markers` array
+    markers.push({ marker, scrollPosition: currentScrollPosition });
+    markers.sort((a, b) => a.scrollPosition - b.scrollPosition); // Sort by scroll position
+
+    // Update the DOM order of markers (optional but keeps UI consistent with array order)
+    document.body.querySelectorAll('.scroll-marker').forEach((m) => m.remove());
+    markers.forEach(({ marker }) => {
+        document.body.appendChild(marker);
+    });
 }
 
 function getScrollableElement() {
@@ -57,6 +53,9 @@ function getScrollableElement() {
     return scrollableElements.length > 0 ? scrollableElements : [defaultElement];
 }
 
+const markers = [];
+let idx = 0;
+
 const island = document.createElement('div');
 const upBtn = document.createElement('button');
 const downBtn = document.createElement('button');
@@ -72,6 +71,23 @@ downBtn.classList.add('down-btn');
 createMarkBtn.classList.add('create-mark');
 
 createMarkBtn.addEventListener('click', createMarker);
+
+downBtn.addEventListener('click', () => {
+    if (markers.length <= 0) {
+        return;
+    }
+    idx = (idx + 1) % markers.length;
+    markers[idx].marker.click();
+});
+
+upBtn.addEventListener('click', () => {
+    if (markers.length <= 0) {
+        return;
+    }
+    idx = (idx - 1 + markers.length) % markers.length;
+    markers[idx].marker.click();
+});
+
 island.appendChild(createMarkBtn);
 island.appendChild(upBtn);
 island.appendChild(downBtn);
