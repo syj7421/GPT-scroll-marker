@@ -22,7 +22,7 @@ function handleCreateMarker() {
 
     const marker = document.createElement('button');
     marker.classList.add('scroll-marker');
-    marker.style.top = `${(scrollPosition / effectiveHeight) * 100}%`;
+    marker.style.top = `${(scrollPosition / effectiveHeight) * 100}%`; // Fixed template literal syntax
 
     marker.addEventListener('click', () => scrollToPosition(mainScrollable, scrollPosition));
 
@@ -48,10 +48,9 @@ function getMainScrollableElement() {
         const styles = getComputedStyle(el);
         return el.scrollHeight > el.clientHeight &&
             (styles.overflowY === 'scroll' || styles.overflowY === 'auto') &&
-            !el.classList.contains('navbar');
+            !el.closest('nav'); // Exclude elements that are within a <nav> tag or are <nav> tags themselves
     });
-
-    return scrollables.at(-1) || document.scrollingElement || document.body;
+    return scrollables.at(-1) || null; // Return the last scrollable element or null
 }
 
 // Calculate the effective scrollable height
@@ -71,18 +70,23 @@ function updateMarkers() {
 function createControlButton(label, onClick) {
     const button = document.createElement('button');
     button.textContent = label;
-    button.classList.add(`${label.toLowerCase()}-btn`);
+    button.classList.add(`${label.toLowerCase()}-btn`); // Use backticks for template literals
     button.addEventListener('click', onClick);
     return button;
 }
 
-// reset markers when other chat stream is clicked
-document.querySelector('nav').addEventListener('click', (event) => {
-    if (event.target.closest('nav')) {
-        // Remove all elements with the class 'scroll-marker', reset 
+// Reset markers when a click occurs on a descendant of <nav> or the specific button
+document.addEventListener('click', (event) => {
+    const navElement = event.target.closest('nav');
+    const isNewChatButton = event.target.closest('button[aria-label="New chat"]');
+
+    if ((navElement && document.contains(navElement)) || isNewChatButton) {
+        // Remove all elements with the class 'scroll-marker'
+        console.log("Either a descendant of <nav> or the 'New chat' button was clicked.");
         document.querySelectorAll('.scroll-marker').forEach(marker => marker.remove());
-        markers.length = 0;
+
+        // Clear the markers array and reset the current marker index
+        markers.length = 0; // Clear the array
         currentMarkerIndex = 0;
     }
 });
-
