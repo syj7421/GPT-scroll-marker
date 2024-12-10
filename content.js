@@ -1,97 +1,88 @@
-function createMarker() {
-    const scrollables = getScrollableElement();
-    const mainPage = scrollables.at(-1); // Safely get the last element
-
-    // Get current scroll position
-    const currentScrollPosition = mainPage.scrollTop;
-    console.log("Total height:", mainPage.scrollHeight);
-    console.log("Current position relative to top:", currentScrollPosition);
-
-    // Create a marker button
-    const marker = document.createElement('button');
-    marker.textContent = "●";
-    marker.classList.add('scroll-marker');
-
-    // Place marker proportionally based on the scroll position
-    marker.style.top = `${(currentScrollPosition / (mainPage.scrollHeight - mainPage.clientHeight)) * 100}%`;
-
-    // Add click event to teleport to the marker position
-    marker.addEventListener('click', () => {
-        mainPage.scrollTo({
-            top: currentScrollPosition,
-            behavior: 'smooth',
-        });
-        idx = markers.findIndex(({ marker: m }) => m === marker);
-    });
-
-    // Insert the marker into the sorted `markers` array
-    markers.push({ marker, scrollPosition: currentScrollPosition });
-    markers.sort((a, b) => a.scrollPosition - b.scrollPosition); // Sort by scroll position
-
-    // Update the DOM order of markers (optional but keeps UI consistent with array order)
-    document.body.querySelectorAll('.scroll-marker').forEach((m) => m.remove());
-    markers.forEach(({ marker }) => {
-        document.body.appendChild(marker);
-    });
-}
-
-function getScrollableElement() {
-    let scrollableElements = [];
-    document.querySelectorAll('*').forEach(el => {
-        if (
-            el.scrollHeight > el.clientHeight &&
-            (getComputedStyle(el).overflowY === 'scroll' || getComputedStyle(el).overflowY === 'auto')
-        ) {
-            // Exclude navbar if it has a unique class or identifier
-            if (!el.classList.contains('navbar')) {
-                scrollableElements.push(el);
-            }
-        }
-    });
-
-    // Fallback to document.scrollingElement or document.body
-    const defaultElement = document.scrollingElement || document.body;
-    return scrollableElements.length > 0 ? scrollableElements : [defaultElement];
-}
-
 const markers = [];
-let idx = 0;
+let currentMarkerIndex = 0;
 
-const island = document.createElement('div');
-const upBtn = document.createElement('button');
-const downBtn = document.createElement('button');
-const createMarkBtn = document.createElement('button');
+// Create buttons and container for marker controls
+const controlsContainer = document.createElement('div');
+controlsContainer.classList.add('island');
 
-upBtn.textContent = "Up";
-downBtn.textContent = "Down";
-createMarkBtn.textContent = "Create";
+const createButton = createControlButton('Create', handleCreateMarker);
+const upButton = createControlButton('Up', navigateMarkers.bind(null, -1));
+const downButton = createControlButton('Down', navigateMarkers.bind(null, 1));
 
-island.classList.add('island');
-upBtn.classList.add('up-btn');
-downBtn.classList.add('down-btn');
-createMarkBtn.classList.add('create-mark');
+controlsContainer.append(createButton, upButton, downButton);
+document.body.appendChild(controlsContainer);
 
-createMarkBtn.addEventListener('click', createMarker);
+// Create marker and attach to scrollable element
+function handleCreateMarker() {
+    const mainScrollable = getMainScrollableElement();
+    if (!mainScrollable) return;
 
-downBtn.addEventListener('click', () => {
-    if (markers.length <= 0) {
-        return;
+    const scrollPosition = mainScrollable.scrollTop;
+    const effectiveHeight = getEffectiveHeight(mainScrollable);
+
+    const marker = document.createElement('button');
+    marker.classList.add('scroll-marker');
+    marker.style.top = `${(scrollPosition / effectiveHeight) * 100}%`;
+
+    marker.addEventListener('click', () => scrollToPosition(mainScrollable, scrollPosition));
+
+    markers.push({ marker, scrollPosition });
+    updateMarkers();
+}
+
+// Navigate between markers
+function navigateMarkers(direction) {
+    if (!markers.length) return;
+    currentMarkerIndex = (currentMarkerIndex + direction + markers.length) % markers.length;
+    markers[currentMarkerIndex].marker.click();
+}
+
+// Scroll to a specific position
+function scrollToPosition(element, position) {
+    element.scrollTo({ top: position, behavior: 'smooth' });
+}
+
+// Get the main scrollable element
+function getMainScrollableElement() {
+    const scrollables = Array.from(document.querySelectorAll('*')).filter(el => {
+        const styles = getComputedStyle(el);
+        return el.scrollHeight > el.clientHeight &&
+            (styles.overflowY === 'scroll' || styles.overflowY === 'auto') &&
+            !el.classList.contains('navbar');
+    });
+
+    return scrollables.at(-1) || document.scrollingElement || document.body;
+}
+
+// Calculate the effective scrollable height
+function getEffectiveHeight(element) {
+    const footerHeight = document.querySelector('#composer-background')?.offsetHeight || 0;
+    return element.scrollHeight - footerHeight;
+}
+
+// Update markers in the DOM and ensure sorted order
+function updateMarkers() {
+    markers.sort((a, b) => a.scrollPosition - b.scrollPosition);
+    document.querySelectorAll('.scroll-marker').forEach(marker => marker.remove());
+    markers.forEach(({ marker }) => document.body.appendChild(marker));
+}
+
+// Create reusable control buttons
+function createControlButton(label, onClick) {
+    const button = document.createElement('button');
+    button.textContent = label;
+    button.classList.add(`${label.toLowerCase()}-btn`);
+    button.addEventListener('click', onClick);
+    return button;
+}
+
+// reset markers when other chat stream is clicked
+document.querySelector('nav').addEventListener('click', (event) => {
+    if (event.target.closest('nav')) {
+        // Remove all elements with the class 'scroll-marker', reset 
+        document.querySelectorAll('.scroll-marker').forEach(marker => marker.remove());
+        markers.length = 0;
+        currentMarkerIndex = 0;
     }
-    idx = (idx + 1) % markers.length;
-    markers[idx].marker.click();
 });
 
-upBtn.addEventListener('click', () => {
-    if (markers.length <= 0) {
-        return;
-    }
-    idx = (idx - 1 + markers.length) % markers.length;
-    markers[idx].marker.click();
-});
-
-island.appendChild(createMarkBtn);
-island.appendChild(upBtn);
-island.appendChild(downBtn);
-getScrollableElement();
-
-document.body.appendChild(island);
