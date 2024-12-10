@@ -1,18 +1,20 @@
+// File: scrollMarkerManager.js
+
 const markers = [];
 let currentMarkerIndex = 0;
 
-// Create buttons and container for marker controls
+// Initialize and render controls
 const controlsContainer = document.createElement('div');
-controlsContainer.classList.add('island');
+controlsContainer.className = 'island';
 
-const createButton = createControlButton('Create', handleCreateMarker);
-const upButton = createControlButton('Up', navigateMarkers.bind(null, -1));
-const downButton = createControlButton('Down', navigateMarkers.bind(null, 1));
+['Create', 'Up', 'Down'].forEach((label, idx) => {
+    const actions = [handleCreateMarker, () => navigateMarkers(-1), () => navigateMarkers(1)];
+    controlsContainer.appendChild(createControlButton(label, actions[idx]));
+});
 
-controlsContainer.append(createButton, upButton, downButton);
 document.body.appendChild(controlsContainer);
 
-// Create marker and attach to scrollable element
+// Create a new marker at the current scroll position
 function handleCreateMarker() {
     const mainScrollable = getMainScrollableElement();
     if (!mainScrollable) return;
@@ -20,73 +22,71 @@ function handleCreateMarker() {
     const scrollPosition = mainScrollable.scrollTop;
     const effectiveHeight = getEffectiveHeight(mainScrollable);
 
-    const marker = document.createElement('button');
-    marker.classList.add('scroll-marker');
-    marker.style.top = `${(scrollPosition / effectiveHeight) * 100}%`; // Fixed template literal syntax
-
+    const marker = createMarkerElement(scrollPosition, effectiveHeight);
     marker.addEventListener('click', () => scrollToPosition(mainScrollable, scrollPosition));
 
     markers.push({ marker, scrollPosition });
     updateMarkers();
 }
 
-// Navigate between markers
+// Navigate markers in the specified direction
 function navigateMarkers(direction) {
     if (!markers.length) return;
     currentMarkerIndex = (currentMarkerIndex + direction + markers.length) % markers.length;
     markers[currentMarkerIndex].marker.click();
 }
 
-// Scroll to a specific position
+// Smoothly scroll to a specified position
 function scrollToPosition(element, position) {
     element.scrollTo({ top: position, behavior: 'smooth' });
 }
 
-// Get the main scrollable element
+// Retrieve the main scrollable element
 function getMainScrollableElement() {
-    const scrollables = Array.from(document.querySelectorAll('*')).filter(el => {
-        const styles = getComputedStyle(el);
-        return el.scrollHeight > el.clientHeight &&
-            (styles.overflowY === 'scroll' || styles.overflowY === 'auto') &&
-            !el.closest('nav'); // Exclude elements that are within a <nav> tag or are <nav> tags themselves
-    });
-    return scrollables.at(-1) || null; // Return the last scrollable element or null
+    return Array.from(document.querySelectorAll('*'))
+        .filter(el => {
+            const styles = getComputedStyle(el);
+            return el.scrollHeight > el.clientHeight &&
+                ['scroll', 'auto'].includes(styles.overflowY) &&
+                !el.closest('nav');
+        })
+        .at(-1) || null;
 }
 
-// Calculate the effective scrollable height
+// Calculate the scrollable height, excluding the footer
 function getEffectiveHeight(element) {
-    const footerHeight = document.querySelector('#composer-background')?.offsetHeight || 0;
-    return element.scrollHeight - footerHeight;
+    return element.scrollHeight - (document.querySelector('#composer-background')?.offsetHeight || 0);
 }
 
-// Update markers in the DOM and ensure sorted order
+// Update DOM markers and sort them
 function updateMarkers() {
     markers.sort((a, b) => a.scrollPosition - b.scrollPosition);
-    document.querySelectorAll('.scroll-marker').forEach(marker => marker.remove());
+    document.querySelectorAll('.scroll-marker').forEach(el => el.remove());
     markers.forEach(({ marker }) => document.body.appendChild(marker));
+}
+
+// Create a marker element
+function createMarkerElement(scrollPosition, effectiveHeight) {
+    const marker = document.createElement('button');
+    marker.className = 'scroll-marker';
+    marker.style.top = `${(scrollPosition / effectiveHeight) * 100}%`;
+    return marker;
 }
 
 // Create reusable control buttons
 function createControlButton(label, onClick) {
     const button = document.createElement('button');
+    button.className = `${label.toLowerCase()}-btn`;
     button.textContent = label;
-    button.classList.add(`${label.toLowerCase()}-btn`); // Use backticks for template literals
     button.addEventListener('click', onClick);
     return button;
 }
 
-// Reset markers when a click occurs on a descendant of <nav> or the specific button
-document.addEventListener('click', (event) => {
-    const navElement = event.target.closest('nav');
-    const isNewChatButton = event.target.closest('button[aria-label="New chat"]');
-
-    if ((navElement && document.contains(navElement)) || isNewChatButton) {
-        // Remove all elements with the class 'scroll-marker'
-        console.log("Either a descendant of <nav> or the 'New chat' button was clicked.");
-        document.querySelectorAll('.scroll-marker').forEach(marker => marker.remove());
-
-        // Clear the markers array and reset the current marker index
-        markers.length = 0; // Clear the array
+// Reset markers on specific events
+document.addEventListener('click', ({ target }) => {
+    if (target.closest('nav') || target.closest('button[aria-label="New chat"]')) {
+        document.querySelectorAll('.scroll-marker').forEach(el => el.remove());
+        markers.length = 0;
         currentMarkerIndex = 0;
     }
 });
