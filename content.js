@@ -21,6 +21,7 @@ function createMarker() {
             top: currentScrollPosition,
             behavior: 'smooth',
         });
+        idx = markers.findIndex(({ marker: m }) => m === marker);
     });
 
     // Insert the marker into the sorted `markers` array
