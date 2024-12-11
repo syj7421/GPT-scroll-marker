@@ -14,6 +14,10 @@ document.body.appendChild(controlsContainer);
 
 // Create a new marker at the current scroll position
 function handleCreateMarker() {
+    if (markers.length >= 10){
+        alert("You can create up to 10 markers!");
+        return;
+    }
     const mainScrollable = getMainScrollableElement();
     if (!mainScrollable) return;
 
