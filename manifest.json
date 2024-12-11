@@ -5,14 +5,14 @@
   "description": "Add bookmarks to scroll positions.",
   "permissions": ["storage"],
   "host_permissions": ["https://chatgpt.com/*"],
-  "background": {
-    "service_worker": "background.js"
+  "action": {
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/*"],
       "js": ["content.js"],
-      "css": ["styles.css"]
+      "css": ["content.css"]
     }
   ]
 }
