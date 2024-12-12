@@ -1,4 +1,5 @@
 const markers = [];
+const markersLimit = 20;
 let currentMarkerIndex = 0;
 
 // Initialize and render controls
@@ -14,8 +15,8 @@ document.body.appendChild(controlsContainer);
 
 // Create a new marker at the current scroll position
 function handleCreateMarker() {
-    if (markers.length >= 10){
-        alert("You can create up to 10 markers!");
+    if (markers.length >= markersLimit){
+        alert("You can create up to " + markersLimit + " markers!");
         return;
     }
     const mainScrollable = getMainScrollableElement();
@@ -177,3 +178,42 @@ document.addEventListener('mouseup', () => {
         controlsContainer.classList.remove('dragging'); // Remove dragging class
     }
 });
+// Function to check dark mode
+function isDarkMode() {
+    return document.documentElement.classList.contains('dark');
+}
+
+// Function to update styles dynamically
+function updateIslandStyles() {
+    const island = document.querySelector('.island');
+    if (!island) {
+        console.error("Island element not found.");
+        return;
+    }
+
+    if (isDarkMode()) {
+        island.style.backgroundColor = '#1E1E1E';
+        island.style.borderColor = '#333333';
+        console.log("Dark mode detected. Styles updated.");
+    } else {
+        island.style.backgroundColor = 'red';
+        island.style.borderColor = '#FF5555';
+        console.log("Bright mode detected. Styles updated.");
+    }
+}
+
+// Initial check
+updateIslandStyles();
+
+// Create and configure the MutationObserver
+const observer = new MutationObserver((mutationsList) => {
+    for (const mutation of mutationsList) {
+        if (mutation.attributeName === 'class') {
+            console.log("Class attribute changed on <html>.");
+            updateIslandStyles(); // Re-apply styles based on the new mode
+        }
+    }
+});
+
+// Start observing <html> for attribute changes
+observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });

@@ -7,14 +7,19 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px; 
+    gap: 5px;
+    background-color: #1E1E1E; /* Assuming the dark background color from the first image */
+    /* border: 2.5px solid #333333; Assuming the border color from the second image */
+    border-radius: 12px;
+    padding: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .island button {
-    background-color: #333; /* Dark background to match the image */
-    border-radius: 20%;     /* Circular button */
-    width: 40px;   
-    color: #F9F9F9;         /* Button size */
+    background-color: #333333; /* Dark button background */
+    color: #F9F9F9;            /* Light font color */
+    border-radius: 20%;
+    width: 40px;
     height: 40px;
     font-size: 22px;
     font-weight: 600;
@@ -27,18 +32,18 @@
 }
 
 .island button:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25); /* Enhanced shadow on hover */
     transform: scale(1.05);
 }
 
 .island button:active {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Reduced shadow on click */
     transform: scale(0.95);
 }
 
 .island button i {
-    font-size: 22px; /* Slightly adjusted for proportional icon size */
-    color: #000000;
+    font-size: 22px;
+    color: #F9F9F9; /* Matches button text color */
 }
 
 .scroll-marker {
@@ -60,8 +65,7 @@
     opacity: 0.9;
 }
 
-
 .island.dragging {
-    opacity: 0.8; /* Slightly transparent while dragging */
-    cursor: grab; /* Change cursor to grab */
+    opacity: 0.8;
+    cursor: grab;
 }
