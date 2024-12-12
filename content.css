@@ -1,44 +1,60 @@
 .island {
     all: unset;
-    position: fixed;      
-    bottom: 20px;         
-    right: 20px;          
-    background-color: #007bff; 
-    color: #fff;
-    cursor: pointer;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
     z-index: 1000;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    gap: 8px; /* Adds a small gap between buttons */
 }
 
-.up-btn{
-    all: unset;
-
-}
-
-.down-btn{
-    all: unset;
-
-}
-
-.create-mark{
-    all: unset;
-
-}
-
-.remove-mark{
-    all: unset;
-
-}
-
-.scroll-marker{
-    all: unset;
-    background-color: red;
-    color: red;
-    position: fixed; /* Fixed to the viewport */
-    right: 5px;      /* Position next to the scrollbar */
-    width: 10px;
-    height: 10px;
+.island button {
+    background-color: #FFFFFF;
+    color: #000000;
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 50%;
+    width: 45px; /* 90% of 50px */
+    height: 45px; /* 90% of 50px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.island button:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: scale(1.05);
+}
+
+.island button:active {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: scale(0.95);
+}
+
+.island button i {
+    font-size: 22px; /* Slightly adjusted for proportional icon size */
+    color: #000000;
+}
+
+.scroll-marker {
+    position: absolute;
+    right: 5px;
+    width: 14px;
+    height: 14px;
+    background-color: #1385ff;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
     z-index: 1000;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.scroll-marker:hover {
+    transform: scale(1.2);
+    opacity: 0.9;
 }

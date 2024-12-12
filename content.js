@@ -5,7 +5,7 @@ let currentMarkerIndex = 0;
 const controlsContainer = document.createElement('div');
 controlsContainer.className = 'island';
 
-['Create', 'Up', 'Down'].forEach((label, idx) => {
+['➕', '▲', '▼'].forEach((label, idx) => {
     const actions = [handleCreateMarker, () => navigateMarkers(-1), () => navigateMarkers(1)];
     controlsContainer.appendChild(createControlButton(label, actions[idx]));
 });
