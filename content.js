@@ -5,7 +5,7 @@ let currentMarkerIndex = 0;
 const controlsContainer = document.createElement('div');
 controlsContainer.className = 'island';
 
-['➕', '▲', '▼'].forEach((label, idx) => {
+['+', '↑', '↓'].forEach((label, idx) => {
     const actions = [handleCreateMarker, () => navigateMarkers(-1), () => navigateMarkers(1)];
     controlsContainer.appendChild(createControlButton(label, actions[idx]));
 });
@@ -144,3 +144,36 @@ function calculateMarkerVisibility(marker, scrollableElement) {
 
     return { scrollPosition, visible };
 }
+
+
+
+let isDragging = false;
+let offsetX = 0;
+let offsetY = 0;
+
+controlsContainer.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    // Calculate the offset of the mouse position relative to the widget
+    offsetX = e.clientX - controlsContainer.getBoundingClientRect().left;
+    offsetY = e.clientY - controlsContainer.getBoundingClientRect().top;
+
+    // Add a class to indicate dragging (optional for styling)
+    controlsContainer.classList.add('dragging');
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+        // Update the widget's position
+        controlsContainer.style.left = `${e.clientX - offsetX}px`;
+        controlsContainer.style.top = `${e.clientY - offsetY}px`;
+        controlsContainer.style.right = 'unset'; // Ensure 'right' is unset
+        controlsContainer.style.bottom = 'unset'; // Ensure 'bottom' is unset
+    }
+});
+
+document.addEventListener('mouseup', () => {
+    if (isDragging) {
+        isDragging = false;
+        controlsContainer.classList.remove('dragging'); // Remove dragging class
+    }
+});

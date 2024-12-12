@@ -7,22 +7,23 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px; /* Adds a small gap between buttons */
+    gap: 5px; 
 }
 
 .island button {
-    background-color: #FFFFFF;
-    color: #000000;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
-    width: 45px; /* 90% of 50px */
-    height: 45px; /* 90% of 50px */
+    background-color: #333; /* Dark background to match the image */
+    border-radius: 20%;     /* Circular button */
+    width: 40px;   
+    color: #F9F9F9;         /* Button size */
+    height: 40px;
+    font-size: 22px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: transform 0.2s;
 }
 
 .island button:hover {
@@ -57,4 +58,10 @@
 .scroll-marker:hover {
     transform: scale(1.2);
     opacity: 0.9;
+}
+
+
+.island.dragging {
+    opacity: 0.8; /* Slightly transparent while dragging */
+    cursor: grab; /* Change cursor to grab */
 }
