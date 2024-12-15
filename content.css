@@ -1,4 +1,4 @@
-.island {
+.island-dark {
     all: unset;
     position: fixed;
     bottom: 20px;
@@ -8,22 +8,20 @@
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    background-color: #1E1E1E; /* Assuming the dark background color from the first image */
-    /* border: 2.5px solid #333333; Assuming the border color from the second image */
-    border-radius: 12px;
-    padding: 5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background-color: #2F2F2F;
+    border-radius: 14px;
+    padding: 5.5px;
 }
 
-.island button {
-    background-color: #333333; /* Dark button background */
-    color: #F9F9F9;            /* Light font color */
-    border-radius: 20%;
-    width: 40px;
-    height: 40px;
+.island-dark button {
+    background-color: #FFFFFF; /* Dark button background */
+    color: #000000;
+    border-radius: 100%;
+    width: 33px;
+    height: 33px;
     font-size: 22px;
     font-weight: 600;
-    display: flex;
+    display: flex; 
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
@@ -31,20 +29,68 @@
     transition: transform 0.2s;
 }
 
-.island button:hover {
+.island-dark button:hover {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25); /* Enhanced shadow on hover */
     transform: scale(1.05);
 }
 
-.island button:active {
+.island-dark button:active {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Reduced shadow on click */
     transform: scale(0.95);
 }
 
-.island button i {
-    font-size: 22px;
-    color: #F9F9F9; /* Matches button text color */
+
+
+
+
+.island-bright {
+    all: unset;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background-color: #F4F4F4;
+    border-radius: 14px;
+    padding: 5.5px;
 }
+
+.island-bright button {
+    background-color: #000000; /* Dark button background */
+    color: #FFFFFF;
+    border-radius: 100%;
+    width: 33px;
+    height: 33px;
+    font-size: 22px;
+    font-weight: 600;
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.island-bright button:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25); /* Enhanced shadow on hover */
+    transform: scale(1.05);
+}
+
+.island-bright button:active {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Reduced shadow on click */
+    transform: scale(0.95);
+}
+
+
+
+
+
+
+
+
 
 .scroll-marker {
     position: absolute;

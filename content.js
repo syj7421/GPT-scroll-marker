@@ -192,15 +192,16 @@ function updateIslandStyles() {
     }
 
     if (isDarkMode()) {
-        island.style.backgroundColor = '#1E1E1E';
-        island.style.borderColor = '#333333';
-        console.log("Dark mode detected. Styles updated.");
+        island.classList.remove('island-bright');
+        island.classList.add('island-dark');
+        console.log("Dark mode detected. Class updated to 'island-dark'.");
     } else {
-        island.style.backgroundColor = 'red';
-        island.style.borderColor = '#FF5555';
-        console.log("Bright mode detected. Styles updated.");
+        island.classList.remove('island-dark');
+        island.classList.add('island-bright');
+        console.log("Bright mode detected. Class updated to 'island-bright'.");
     }
 }
+
 
 // Initial check
 updateIslandStyles();
