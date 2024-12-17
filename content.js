@@ -407,3 +407,19 @@ const observer = new MutationObserver((mutationsList) => {
 
 // Start observing <html> for attribute changes
 observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "hide_widget") {
+        const widget = document.querySelector('.island');
+        if (widget) {
+            widget.style.display = "none";
+        }
+    }
+    if (message.action === "show_widget") {
+        const widget = document.querySelector('.island');
+        if (widget) {
+            widget.style.display = "";
+        }
+    }
+});
