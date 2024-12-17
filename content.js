@@ -6,8 +6,15 @@ let isDeleteMode = false;
 // Initialize and render controls
 const controlsContainer = document.createElement('div');
 controlsContainer.className = 'island';
+// Ensure the tooltip container exists
+let tooltip = document.getElementById('custom-tooltip');
+if (!tooltip) {
+    tooltip = document.createElement('div');
+    tooltip.id = 'custom-tooltip';
+    tooltip.className = 'tooltip';
+    document.body.appendChild(tooltip);
+}
 
-// Define buttons with their labels and actions
 const buttons = [
     { 
         label: `
@@ -27,7 +34,7 @@ const buttons = [
         `,
         action: toggleDeleteMode, 
         className: 'delete-btn',
-        tooltip: 'Delete existing markers' 
+        tooltip: 'To delete markers: Click this button, then click on the markers you want to remove!' 
     },
     { 
         label: `
@@ -42,7 +49,7 @@ const buttons = [
     { 
         label: `
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
-                <path fill="currentColor" d="M8 .5a.5.5 0 0 1 .5.5v11.293l3.646-3.647a.5.5 0 1 1 .708.708l-4.5 4.5a.5.5 0 0 1-.708 0l-4.5-4.5a.5.5 0 1 1 .708-.708L7.5 12.293V1a.5.5 0 0 1 .5-.5z"/>
+                <path fill="currentColor" d="M8 .5a.5.5 0 0 1 .5.5v11.293l3.646-3.647a.5.5 0 1 1 .708.708l-4.5 4.5a.5.5 0 0 1-.708 0l-4.5-4.5a.5.5 0 1 1-.708-.708L7.5 12.293V1a.5.5 0 0 1 .5-.5z"/>
             </svg>
         `,
         action: () => navigateMarkers(1), 
@@ -51,16 +58,38 @@ const buttons = [
     }
 ];
 
-// Create and append each button with the `title` attribute
-buttons.forEach(({ label, action, className, tooltip }) => {
+// Tooltip positioning logic
+const showTooltip = (event, text) => {
+    tooltip.textContent = text;
+
+    // Position the tooltip LEFT of the cursor
+    const tooltipWidth = tooltip.offsetWidth;
+    const offset = 20;
+
+    tooltip.style.left = `${event.pageX - tooltipWidth - offset}px`;
+    tooltip.style.top = `${event.pageY - offset}px`;
+    tooltip.style.display = 'block';
+    tooltip.style.opacity = '1';
+};
+
+const hideTooltip = () => {
+    tooltip.style.display = 'none';
+    tooltip.style.opacity = '0';
+};
+
+// Add buttons dynamically
+buttons.forEach(({ label, action, className, tooltip: tooltipText }) => {
     const button = document.createElement('button');
     button.className = className;
-    button.innerHTML = label; // Use innerHTML to insert the SVG
+    button.innerHTML = label;
     button.addEventListener('click', action);
-    button.title = tooltip; // Set the native tooltip
+
+    button.addEventListener('mouseenter', (e) => showTooltip(e, tooltipText));
+    button.addEventListener('mousemove', (e) => showTooltip(e, tooltipText));
+    button.addEventListener('mouseleave', hideTooltip);
+
     controlsContainer.appendChild(button);
 });
-
 
 
 // Append controls container to the body

@@ -123,3 +123,27 @@
     box-shadow: 0 0 10px rgba(244, 67, 54, 0.5); /* Subtle red glow */
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
+
+.tooltip {
+    position: absolute;
+    display: none;
+    background: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
+    color: #fff; /* White text */
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none; /* Prevent tooltip from interfering with events */
+    z-index: 1000;
+    transition: opacity 0.1s ease-in-out;
+}
+
+button {
+    position: relative;
+    margin: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #f0f0f0; /* Highlight button on hover */
+}
