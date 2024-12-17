@@ -60,14 +60,35 @@ function scrollToPosition(element, position) {
 
 // Retrieve the main scrollable element
 function getMainScrollableElement() {
-    return Array.from(document.querySelectorAll('*'))
+    // Get all scrollable elements
+    const scrollableElements = Array.from(document.querySelectorAll('*'))
         .filter(el => {
             const styles = getComputedStyle(el);
-            return el.scrollHeight > el.clientHeight &&
-                ['scroll', 'auto'].includes(styles.overflowY) &&
-                !el.closest('nav');
-        })
-        .at(-1) || null;
+            const rect = el.getBoundingClientRect();
+            return (
+                el.scrollHeight > el.clientHeight && // Element can scroll
+                ['scroll', 'auto'].includes(styles.overflowY) && // Scrollable style
+                rect.height > 0 && rect.width > 0 && // Element is visible
+                !el.closest('nav') // Exclude nav elements
+            );
+        });
+
+    // Sort elements by content height and visible area
+    const sortedElements = scrollableElements.sort((a, b) => {
+        const aRect = a.getBoundingClientRect();
+        const bRect = b.getBoundingClientRect();
+        
+        const aScrollSize = a.scrollHeight - a.clientHeight; // Scrollable content
+        const bScrollSize = b.scrollHeight - b.clientHeight;
+
+        const aVisibleArea = aRect.height * aRect.width; // Visible area
+        const bVisibleArea = bRect.height * bRect.width;
+
+        // Prioritize by scrollable content first, then visible area
+        return (bScrollSize - aScrollSize) || (bVisibleArea - aVisibleArea);
+    });
+
+    return sortedElements[0] || null;
 }
 
 // Calculate the scrollable height, excluding the footer
