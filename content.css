@@ -1,4 +1,5 @@
-.island-dark {
+/* Shared Styles */
+.island {
     all: unset;
     position: fixed;
     bottom: 20px;
@@ -8,90 +9,54 @@
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    background-color: #2F2F2F;
     border-radius: 14px;
     padding: 5.5px;
+}
+
+.island button {
+    border-radius: 50%;
+    width: 33px;
+    height: 33px;
+    font-size: 22px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.island button:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+    transform: scale(1.05);
+}
+
+.island button:active {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: scale(0.95);
+}
+
+/* Themes */
+.island-dark {
+    background-color: #2F2F2F;
 }
 
 .island-dark button {
-    background-color: #FFFFFF; /* Dark button background */
+    background-color: #FFFFFF;
     color: #000000;
-    border-radius: 100%;
-    width: 33px;
-    height: 33px;
-    font-size: 22px;
-    font-weight: 600;
-    display: flex; 
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    cursor: pointer;
-    transition: transform 0.2s;
 }
-
-.island-dark button:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25); /* Enhanced shadow on hover */
-    transform: scale(1.05);
-}
-
-.island-dark button:active {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Reduced shadow on click */
-    transform: scale(0.95);
-}
-
-
-
-
 
 .island-bright {
-    all: unset;
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
     background-color: #F4F4F4;
-    border-radius: 14px;
-    padding: 5.5px;
 }
 
 .island-bright button {
-    background-color: #000000; /* Dark button background */
+    background-color: #000000;
     color: #FFFFFF;
-    border-radius: 100%;
-    width: 33px;
-    height: 33px;
-    font-size: 22px;
-    font-weight: 600;
-    display: flex; 
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    cursor: pointer;
-    transition: transform 0.2s;
 }
 
-.island-bright button:hover {
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25); /* Enhanced shadow on hover */
-    transform: scale(1.05);
-}
-
-.island-bright button:active {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Reduced shadow on click */
-    transform: scale(0.95);
-}
-
-
-
-
-
-
-
-
-
+/* Scroll Marker */
 .scroll-marker {
     position: absolute;
     right: 5px;
@@ -102,8 +67,7 @@
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: pointer;
-    z-index: 1000;
-    transition: transform 0.2s ease, opacity 0.2s ease;
+    transition: transform 0.2s, opacity 0.2s;
 }
 
 .scroll-marker:hover {
@@ -111,30 +75,25 @@
     opacity: 0.9;
 }
 
-.island.dragging {
-    opacity: 0.8;
-    cursor: grab;
-}
-
-
-.island .delete-btn.active {
-    background-color: rgba(244, 67, 54, 0.7); /* Semi-transparent red */
+/* Delete Button */
+.delete-btn.active {
+    background-color: rgba(244, 67, 54, 0.7);
     color: white;
-    box-shadow: 0 0 10px rgba(244, 67, 54, 0.5); /* Subtle red glow */
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+    transition: background-color 0.3s, box-shadow 0.3s;
 }
 
+/* Tooltip */
 .tooltip {
     position: absolute;
     display: none;
-    background: rgba(0, 0, 0, 0.8); /* Semi-transparent background */
-    color: #fff; /* White text */
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
     font-size: 12px;
     padding: 6px 8px;
     border-radius: 4px;
     white-space: nowrap;
-    pointer-events: none; /* Prevent tooltip from interfering with events */
-    z-index: 1000;
+    pointer-events: none;
     transition: opacity 0.1s ease-in-out;
 }
 
@@ -142,8 +101,9 @@ button {
     position: relative;
     margin: 5px;
     cursor: pointer;
+    transition: background-color 0.2s;
 }
 
 button:hover {
-    background-color: #f0f0f0; /* Highlight button on hover */
+    background-color: #f0f0f0;
 }
