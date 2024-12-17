@@ -9,25 +9,58 @@ controlsContainer.className = 'island';
 
 // Define buttons with their labels and actions
 const buttons = [
-    { label: '+', action: handleCreateMarker, className: 'create-btn' },
-    { label: '🗑', action: toggleDeleteMode, className: 'delete-btn' },
-    { label: '↑', action: () => navigateMarkers(-1), className: 'up-btn' },
-    { label: '↓', action: () => navigateMarkers(1), className: 'down-btn' },
+    { 
+        label: `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
+                <path fill="currentColor" d="M8 1c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1H9v5c0 .552-.448 1-1 1s-1-.448-1-1V9H2c-.552 0-1-.448-1-1s.448-1 1-1h5V2c0-.552.448-1 1-1z"/>
+            </svg>
+        `,
+        action: handleCreateMarker, 
+        className: 'create-btn',
+        tooltip: 'Add a marker at the current position' 
+    },
+    { 
+        label: `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
+                <path fill="currentColor" d="M2.5 3a.5.5 0 0 1 .5-.5H5V1a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1h2a.5.5 0 0 1 0 1H2a.5.5 0 0 1 0-1zM3 4h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4z"/>
+            </svg>
+        `,
+        action: toggleDeleteMode, 
+        className: 'delete-btn',
+        tooltip: 'Delete existing markers' 
+    },
+    { 
+        label: `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
+                <path fill="currentColor" d="M8 15.5a.5.5 0 0 1-.5-.5V3.707L3.854 7.354a.5.5 0 1 1-.708-.708l4.5-4.5a.5.5 0 0 1 .708 0l4.5 4.5a.5.5 0 1 1-.708.708L8.5 3.707V15a.5.5 0 0 1-.5.5z"/>
+            </svg>
+        `,
+        action: () => navigateMarkers(-1), 
+        className: 'up-btn',
+        tooltip: 'Go to the previous marker' 
+    },
+    { 
+        label: `
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
+                <path fill="currentColor" d="M8 .5a.5.5 0 0 1 .5.5v11.293l3.646-3.647a.5.5 0 1 1 .708.708l-4.5 4.5a.5.5 0 0 1-.708 0l-4.5-4.5a.5.5 0 1 1 .708-.708L7.5 12.293V1a.5.5 0 0 1 .5-.5z"/>
+            </svg>
+        `,
+        action: () => navigateMarkers(1), 
+        className: 'down-btn',
+        tooltip: 'Go to the next marker' 
+    }
 ];
 
-
-// Create and append each button
-buttons.forEach(({ label, action, className }) => {
+// Create and append each button with the `title` attribute
+buttons.forEach(({ label, action, className, tooltip }) => {
     const button = document.createElement('button');
-    button.className = className; // Set button class explicitly
-    button.textContent = label;
-    if (className === 'delete-btn') {
-        button.disabled = markers.length === 0; // Delete button starts disabled
-        button.style.opacity = markers.length === 0 ? '0.5' : '1';
-    }
+    button.className = className;
+    button.innerHTML = label; // Use innerHTML to insert the SVG
     button.addEventListener('click', action);
+    button.title = tooltip; // Set the native tooltip
     controlsContainer.appendChild(button);
 });
+
 
 
 // Append controls container to the body
