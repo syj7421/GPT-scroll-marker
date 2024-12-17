@@ -115,3 +115,11 @@
     opacity: 0.8;
     cursor: grab;
 }
+
+
+.island .delete-btn.active {
+    background-color: rgba(244, 67, 54, 0.7); /* Semi-transparent red */
+    color: white;
+    box-shadow: 0 0 10px rgba(244, 67, 54, 0.5); /* Subtle red glow */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
