@@ -109,6 +109,12 @@ function handleCreateMarker() {
     const scrollPosition = mainScrollable.scrollTop;
     const totalScrollableHeight = mainScrollable.scrollHeight;
 
+    // Check if a marker with the same position already exists
+    const markerExists = markers.some((m) => m.scrollPosition === scrollPosition);
+    if (markerExists) {
+        return;
+    }
+
     const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable);
 
     // Add click handler for delete or scroll
@@ -125,6 +131,7 @@ function handleCreateMarker() {
     updateMarkers(mainScrollable);
     updateDeleteButtonState();
 }
+
 
 function setButtonsState(disable) {
     const allButtons = controlsContainer.querySelectorAll('button');
@@ -257,7 +264,6 @@ function getMainScrollableElement() {
 function getEffectiveHeight(element) {
     const querybox = document.querySelector('#composer-background');
     if (!querybox) {
-        console.log("Footer (#composer-background) does not exist.");
         return element.clientHeight; // Use clientHeight for visible area
     }
 
@@ -383,11 +389,9 @@ function updateIslandStyles() {
     if (isDarkMode()) {
         island.classList.remove('island-bright');
         island.classList.add('island-dark');
-        console.log("Dark mode detected. Class updated to 'island-dark'.");
     } else {
         island.classList.remove('island-dark');
         island.classList.add('island-bright');
-        console.log("Bright mode detected. Class updated to 'island-bright'.");
     }
 }
 
@@ -399,7 +403,6 @@ updateIslandStyles();
 const observer = new MutationObserver((mutationsList) => {
     for (const mutation of mutationsList) {
         if (mutation.attributeName === 'class') {
-            console.log("Class attribute changed on <html>.");
             updateIslandStyles(); // Re-apply styles based on the new mode
         }
     }
