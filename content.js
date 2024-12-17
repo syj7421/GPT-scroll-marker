@@ -75,15 +75,12 @@ function setButtonsState(disable) {
 }
 
 
-
-// Toggle delete mode
 function toggleDeleteMode() {
     isDeleteMode = !isDeleteMode;
 
-    // Update cursor based on delete mode
-    document.body.style.cursor = isDeleteMode
-        ? 'url("https://icons.iconarchive.com/icons/papirus-team/papirus-status/512/user-trash-full-icon.png") 16 16, pointer'
-        : 'default';
+    // // Update cursor based on delete mode
+    // document.body.style.cursor = 'url("https://icons.iconarchive.com/icons/papirus-team/papirus-status/512/user-trash-full-icon.png") 16 16, pointer';
+
 
     // Toggle delete button active state
     const deleteButton = controlsContainer.querySelector('.delete-btn');
@@ -92,7 +89,6 @@ function toggleDeleteMode() {
     // Disable or enable other buttons
     setButtonsState(isDeleteMode);
 }
-
 
 
 // Delete a marker
