@@ -1,0 +1,76 @@
+body {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers everything horizontally */
+    justify-content: center; /* Centers everything vertically */
+    min-width: 330px;
+    min-height: 350px; /* Set a minimum height */
+    overflow-y: auto; /* Add scroll if the content exceeds the popup size */
+}
+
+#wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items */
+    justify-content: center;
+    gap: 15px; /* Adds spacing */
+    margin: 10px;
+}
+
+#hide-the-widget-btn {
+    background-color: #1385ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    white-space: nowrap; /* Prevents text from wrapping */
+    text-align: center;  /* Centers text horizontally */
+    margin-left: 25px;
+    margin-right: 25px;
+}
+
+#hide-the-widget-btn:hover {
+    background-color: #0f70d1;
+}
+
+#hide-the-widget-btn:active {
+    background-color: #0c5ba3;
+    transform: scale(0.95);
+}
+
+
+#color-picker {
+    display: flex;
+    gap: 10px; /* Space between checkboxes */
+    align-items: center;
+}
+
+#color-picker label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+#color-picker input[type="radio"] {
+    display: none; /* Hide the actual radio input */
+}
+
+.color-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-radius: 4px; /* Optional: makes the edges slightly rounded */
+    display: inline-block;
+}
+
+#color-picker input[type="radio"]:checked + .color-box {
+    border-color: #000; /* Highlight the selected color */
+}

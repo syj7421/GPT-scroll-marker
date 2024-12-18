@@ -6,7 +6,8 @@
   "permissions": ["storage"],
   "host_permissions": ["https://chatgpt.com/*"],
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_title": "My Extension"
   },
   "content_scripts": [
     {
