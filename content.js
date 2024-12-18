@@ -2,6 +2,8 @@ const markers = [];
 const markersLimit = 20;
 let currentMarkerIndex = 0;
 let isDeleteMode = false;
+let currentMarkerColor = "#1385ff"; // Default color for markers
+
 
 // Initialize and render controls
 const controlsContainer = document.createElement('div');
@@ -115,7 +117,10 @@ function handleCreateMarker() {
         return;
     }
 
+    // Create marker with the current color
     const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable);
+
+    marker.style.backgroundColor = currentMarkerColor; // Apply the current color
 
     // Add click handler for delete or scroll
     marker.addEventListener('click', (e) => {
@@ -293,9 +298,11 @@ function createMarkerElement(scrollPosition, totalScrollableHeight, scrollableEl
     const scrollBarWidth = scrollableElement.offsetWidth - scrollableElement.clientWidth;
     marker.style.right = `${scrollBarWidth + 5}px`;
 
+    // Apply the current color to the marker
+    marker.style.backgroundColor = currentMarkerColor;
+
     return marker;
 }
-
 
 // Create control buttons
 function createControlButton(label, onClick, isDelete = false) {
@@ -419,10 +426,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             widget.style.display = "none";
         }
     }
-    if (message.action === "show_widget") {
+    else if (message.action === "show_widget") {
         const widget = document.querySelector('.island');
         if (widget) {
             widget.style.display = "";
         }
+    }
+
+    else if (message.action === "colour_change") {
+        // Update the current marker color
+        currentMarkerColor = message.color;
+
+        // Update all existing scroll markers
+        const scrollMarkers = document.querySelectorAll('.scroll-marker');
+        scrollMarkers.forEach(marker => {
+            marker.style.backgroundColor = currentMarkerColor;
+        });
     }
 });

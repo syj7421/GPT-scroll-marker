@@ -45,11 +45,11 @@ body {
     transform: scale(0.95);
 }
 
-
 #color-picker {
     display: flex;
-    gap: 10px; /* Space between checkboxes */
-    align-items: center;
+    flex-wrap: wrap; /* Wrap items to the next line */
+    gap: 10px;
+    justify-content: center; /* Align items to center */
 }
 
 #color-picker label {
@@ -67,10 +67,22 @@ body {
     width: 20px;
     height: 20px;
     border: 2px solid transparent;
-    border-radius: 4px; /* Optional: makes the edges slightly rounded */
+    border-radius: 4px;
     display: inline-block;
+    position: relative;
+    cursor: pointer;
 }
 
-#color-picker input[type="radio"]:checked + .color-box {
-    border-color: #000; /* Highlight the selected color */
+#color-picker input[type="radio"]:checked + .color-box::after {
+    content: "✔"; /* Unicode checkmark character */
+    color: white; /* Color of the tick */
+    font-size: 20px;
+    font-weight: bold;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none; /* Ensures it doesn’t interfere with clicks */
 }
+
+

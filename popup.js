@@ -20,4 +20,11 @@ const colorPicker = document.getElementById("color-picker");
 colorPicker.addEventListener("change", (event) => {
     const selectedColor = event.target.value;
     hideTheWidgetBtn.style.backgroundColor = selectedColor;
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.sendMessage(tabs[0].id, { 
+            action: "colour_change", 
+            color: selectedColor 
+        });
+    });
 });
