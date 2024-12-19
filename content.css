@@ -64,6 +64,7 @@
     background-color: #1385ff;
     border: 2px solid white;
     border-radius: 50%;
+    z-index: 999;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     transition: transform 0.2s, opacity 0.2s;
