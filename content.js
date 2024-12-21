@@ -6,15 +6,36 @@ const markersLimit = 20;
 let currentMarkerIndex = 0;
 let isDeleteMode = false;
 let currentMarkerColor = "#1385ff"; // Default color for markers
+const MAX_URL_ENTRIES = 100;       // optional limit for local storage keys
+
+/********************************************
+ * MARKER TRACK (PINNED) 
+ ********************************************/
+// We'll create a pinned container (markerTrack) on the right side
+// Markers will be absolutely placed inside it, 
+// using top = ratio * trackHeight => top = (ratio * 100)% for easy debugging.
+
+const markerTrack = document.createElement('div');
+markerTrack.className = 'marker-track';
+document.body.appendChild(markerTrack);
+
+// Basic styling for the pinned track:
+markerTrack.style.position = 'fixed';
+markerTrack.style.top = '60px';
+markerTrack.style.right = '20px';
+markerTrack.style.width = '14px';    // about the same width as markers
+markerTrack.style.height = '60%';    // occupy 60% of viewport height
+markerTrack.style.zIndex = '9999';   
+markerTrack.style.borderRadius = '6px';
+// You can give it a subtle background so you can see it:
+markerTrack.style.backgroundColor = 'rgba(0,0,0,0.03)';
 
 /********************************************
  * MAIN UI ELEMENTS (CONTROLS & TOOLTIP)
  ********************************************/
-// Create container for controls (the "island")
 const controlsContainer = document.createElement('div');
 controlsContainer.className = 'island';
 
-// Create (or retrieve) the tooltip
 let tooltip = document.getElementById('custom-tooltip');
 if (!tooltip) {
     tooltip = document.createElement('div');
@@ -23,7 +44,7 @@ if (!tooltip) {
     document.body.appendChild(tooltip);
 }
 
-// Add controls (buttons) with corresponding actions and tooltips
+// Define buttons
 const buttons = [
     { 
         label: `
@@ -43,7 +64,7 @@ const buttons = [
         `,
         action: toggleDeleteMode, 
         className: 'delete-btn',
-        tooltip: 'To delete markers: Click this button, then click on the markers you want to remove!' 
+        tooltip: 'Click this button to delete markers!' 
     },
     { 
         label: `
@@ -51,7 +72,7 @@ const buttons = [
                 <path fill="currentColor" d="M8 15.5a.5.5 0 0 1-.5-.5V3.707L3.854 7.354a.5.5 0 1 1-.708-.708l4.5-4.5a.5.5 0 0 1 .708 0l4.5 4.5a.5.5 0 1 1-.708.708L8.5 3.707V15a.5.5 0 0 1-.5.5z"/>
             </svg>
         `,
-        action: () => navigateMarkers(-1), 
+        action: () => navigateMarkers(-1),
         className: 'up-btn',
         tooltip: 'Go to the previous marker' 
     },
@@ -61,28 +82,24 @@ const buttons = [
                 <path fill="currentColor" d="M8 .5a.5.5 0 0 1 .5.5v11.293l3.646-3.647a.5.5 0 1 1 .708.708l-4.5 4.5a.5.5 0 0 1-.708 0l-4.5-4.5a.5.5 0 1 1-.708-.708L7.5 12.293V1a.5.5 0 0 1 .5-.5z"/>
             </svg>
         `,
-        action: () => navigateMarkers(1), 
+        action: () => navigateMarkers(1),
         className: 'down-btn',
         tooltip: 'Go to the next marker' 
     }
 ];
 
-// Append buttons and set up tooltips
 buttons.forEach(({ label, action, className, tooltip: tooltipText }) => {
     const button = document.createElement('button');
     button.className = className;
     button.innerHTML = label;
     button.addEventListener('click', action);
 
-    // Tooltip events
     button.addEventListener('mouseenter', (e) => showTooltip(e, tooltipText));
     button.addEventListener('mousemove', (e) => showTooltip(e, tooltipText));
     button.addEventListener('mouseleave', hideTooltip);
 
     controlsContainer.appendChild(button);
 });
-
-// Insert the controls container into the DOM
 document.body.appendChild(controlsContainer);
 
 /********************************************
@@ -90,8 +107,6 @@ document.body.appendChild(controlsContainer);
  ********************************************/
 function showTooltip(event, text) {
     tooltip.textContent = text;
-
-    // Position the tooltip to the left of the cursor
     const tooltipWidth = tooltip.offsetWidth;
     const offset = 20;
 
@@ -107,9 +122,100 @@ function hideTooltip() {
 }
 
 /********************************************
+ * LOCAL STORAGE
+ ********************************************/
+function getCurrentChatUrl() {
+    return window.location.href;
+}
+
+/** Load markers from local storage for the current URL. */
+async function loadMarkersForCurrentUrl() {
+    const currentUrl = getCurrentChatUrl();
+    try {
+        const data = await chrome.storage.local.get([currentUrl]);
+        console.log("Loaded markers:", data[currentUrl]);
+        const stored = data[currentUrl] || [];
+
+        markers.length = 0; // Clear in-memory
+
+        const mainScrollable = getMainScrollableElement();
+        if (!mainScrollable) {
+            console.log("No main scrollable found, cannot create markers yet.");
+            return;
+        }
+
+        // Re-create markers from stored data
+        stored.forEach(m => {
+            const { scrollPosition, ratio, color } = m;
+            const marker = createMarkerElement(scrollPosition, mainScrollable.scrollHeight, ratio);
+            marker.style.backgroundColor = color || currentMarkerColor;
+
+            // Add click event
+            marker.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (isDeleteMode) {
+                    deleteMarker(marker);
+                } else {
+                    scrollToPosition(mainScrollable, scrollPosition);
+                }
+            });
+
+            markers.push({ marker, scrollPosition, ratio });
+        });
+
+        updateMarkers();        // pin them into markerTrack
+        updateDeleteButtonState();
+    } catch (err) {
+        console.error("Error loading markers:", err);
+    }
+}
+
+/** Save markers to local storage for the current URL. */
+async function saveMarkersToLocalStorage() {
+    const currentUrl = getCurrentChatUrl();
+    const toStore = markers.map(m => ({
+        scrollPosition: m.scrollPosition,
+        ratio: m.ratio,
+        color: m.marker.style.backgroundColor
+    }));
+
+    const dataToStore = { [currentUrl]: toStore };
+    console.log("Saving markers:", dataToStore);
+
+    try {
+        await chrome.storage.local.set(dataToStore);
+        await checkAndEvictIfNeeded(currentUrl);
+    } catch (err) {
+        console.error("Error saving markers:", err);
+    }
+}
+
+/** Evict older URLs if we exceed MAX_URL_ENTRIES. */
+async function checkAndEvictIfNeeded(currentUrl) {
+    try {
+        const allData = await chrome.storage.local.get(null);
+        const allKeys = Object.keys(allData);
+
+        if (allKeys.length > MAX_URL_ENTRIES) {
+            const oldestUrl = allKeys[0];
+            if (oldestUrl !== currentUrl) {
+                await chrome.storage.local.remove(oldestUrl);
+            } else if (allKeys.length > 1) {
+                await chrome.storage.local.remove(allKeys[1]);
+            }
+        }
+    } catch (err) {
+        console.error("Error evicting old keys:", err);
+    }
+}
+
+/********************************************
  * MARKER CREATION & DELETION
  ********************************************/
-// Create a new marker at the current scroll position
+/**
+ * Called when user clicks "Add marker"
+ * We'll store both scrollPosition & ratio
+ */
 function handleCreateMarker() {
     if (markers.length >= markersLimit) {
         alert("You can create up to " + markersLimit + " markers!");
@@ -117,71 +223,97 @@ function handleCreateMarker() {
     }
 
     const mainScrollable = getMainScrollableElement();
-    if (!mainScrollable) return;
-
-    const scrollPosition = mainScrollable.scrollTop;
-    const totalScrollableHeight = mainScrollable.scrollHeight;
-
-    // Avoid duplicate markers at the same position
-    const markerExists = markers.some((m) => m.scrollPosition === scrollPosition);
-    if (markerExists) {
+    if (!mainScrollable) {
+        console.log("No main scrollable found. Marker not created.");
         return;
     }
 
-    // Create marker (DOM element) with the current color
-    const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable);
+    const scrollPosition = mainScrollable.scrollTop;
+    const totalScrollableHeight = mainScrollable.scrollHeight;
+    if (totalScrollableHeight === 0) return;
 
-    // Marker click behavior
+    // The ratio is how far down the user scrolled
+    // e.g. scrollPosition / totalScrollableHeight
+    // We do NOT clamp here, but if user is near bottom, ratio ~ 1
+    const ratio = scrollPosition / totalScrollableHeight;
+
+    // Avoid duplicates
+    const alreadyExists = markers.some(m => m.scrollPosition === scrollPosition);
+    if (alreadyExists) return;
+
+    // Create the DOM element
+    const marker = createMarkerElement(scrollPosition, totalScrollableHeight, ratio);
+    marker.style.backgroundColor = currentMarkerColor;
+
     marker.addEventListener('click', (e) => {
         e.stopPropagation();
         if (isDeleteMode) {
-            deleteMarker(marker);  // Delete in delete mode
+            deleteMarker(marker);
         } else {
-            scrollToPosition(mainScrollable, scrollPosition);  // Scroll in normal mode
+            scrollToPosition(mainScrollable, scrollPosition);
         }
     });
 
-    markers.push({ marker, scrollPosition });
-    updateMarkers(mainScrollable);
+    markers.push({ marker, scrollPosition, ratio });
+    updateMarkers();
     updateDeleteButtonState();
+
+    saveMarkersToLocalStorage();
 }
 
-// Delete a marker
+/** Delete marker in-memory & DOM */
 function deleteMarker(markerElement) {
-    const index = markers.findIndex(({ marker }) => marker === markerElement);
-    if (index > -1) {
-        markers.splice(index, 1);
+    const idx = markers.findIndex(m => m.marker === markerElement);
+    if (idx > -1) {
+        markers.splice(idx, 1);
         markerElement.remove();
         updateDeleteButtonState();
+        saveMarkersToLocalStorage();
     }
 }
 
 /********************************************
  * MARKER VISUALS & UPDATING
  ********************************************/
-// Create the DOM element for a marker
-function createMarkerElement(scrollPosition, totalScrollableHeight, scrollableElement) {
+/**
+ * The "Create marker" logic you prefer:
+ * marker.style.top = (scrollPosition / totalScrollableHeight) * 100 + '%'
+ * BUT we actually store ratio for reloading, so we do:
+ * top = ratio * 100 + '%'
+ *
+ * We'll place the marker in our pinned track, not in the chat container.
+ */
+function createMarkerElement(scrollPosition, totalScrollableHeight, ratio) {
     const marker = document.createElement('button');
     marker.className = 'scroll-marker';
-    marker.style.position = 'absolute';
 
-    // Calculate vertical position as a percentage
-    marker.style.top = `${(scrollPosition / totalScrollableHeight) * 100}%`;
-
-    // Offset from the scrollbar
-    const scrollBarWidth = scrollableElement.offsetWidth - scrollableElement.clientWidth;
-    marker.style.right = `${scrollBarWidth + 5}px`;
-
-    // Apply current color
-    marker.style.backgroundColor = currentMarkerColor;
+    // We'll store .dataset.ratio so we can reposition them in updateMarkers()
+    marker.dataset.ratio = ratio;
     return marker;
 }
 
-// Re-inject all markers into scrollable container
-function updateMarkers(scrollableContainer) {
-    markers.sort((a, b) => a.scrollPosition - b.scrollPosition);
-    scrollableContainer.querySelectorAll('.scroll-marker').forEach(el => el.remove());
-    markers.forEach(({ marker }) => scrollableContainer.appendChild(marker));
+/**
+ * Places all markers into markerTrack, setting top = ratio * 100%
+ * so they're pinned in that track container.
+ */
+function updateMarkers() {
+    // Clear existing
+    markerTrack.querySelectorAll('.scroll-marker').forEach(m => m.remove());
+
+    // Sort by ratio
+    markers.sort((a, b) => a.ratio - b.ratio);
+
+    // Re-append them in order
+    markers.forEach(({ marker, ratio }) => {
+        // The user-specified logic was:
+        // marker.style.top = ratio * 100 + '%'
+        // We'll do that now:
+        marker.style.position = 'absolute';
+        marker.style.right = '5px';
+        marker.style.top = (ratio * 100) + '%';
+        // Then add to track
+        markerTrack.appendChild(marker);
+    });
 }
 
 /********************************************
@@ -189,19 +321,14 @@ function updateMarkers(scrollableContainer) {
  ********************************************/
 function toggleDeleteMode() {
     isDeleteMode = !isDeleteMode;
-
-    // Toggle delete button active state
     const deleteButton = controlsContainer.querySelector('.delete-btn');
     deleteButton.classList.toggle('active', isDeleteMode);
-
-    // Disable/enable other buttons while in delete mode
     setButtonsState(isDeleteMode);
 }
 
-// Disable all but the delete button (or enable them back)
 function setButtonsState(disable) {
     const allButtons = controlsContainer.querySelectorAll('button');
-    allButtons.forEach((btn) => {
+    allButtons.forEach(btn => {
         if (!btn.classList.contains('delete-btn')) {
             btn.disabled = disable;
             btn.style.opacity = disable ? '0.5' : '1';
@@ -209,20 +336,17 @@ function setButtonsState(disable) {
     });
 }
 
-// Update the delete button state (e.g., disable if no markers)
 function updateDeleteButtonState() {
     const deleteButton = controlsContainer.querySelector('.delete-btn');
     const noMarkers = markers.length === 0;
-
     deleteButton.disabled = noMarkers;
     deleteButton.style.opacity = noMarkers ? '0.5' : '1';
 
-    // If we have no markers and we're in delete mode, exit delete mode
     if (noMarkers && isDeleteMode) {
         isDeleteMode = false;
         document.body.style.cursor = 'default';
         deleteButton.classList.remove('active');
-        setButtonsState(false); // re-enable buttons
+        setButtonsState(false);
     }
 }
 
@@ -233,81 +357,59 @@ function navigateMarkers(direction) {
     if (!markers.length) return;
 
     currentMarkerIndex = (currentMarkerIndex + direction + markers.length) % markers.length;
-
     const mainScrollable = getMainScrollableElement();
     if (mainScrollable) {
-        const { scrollPosition, visible } = calculateMarkerVisibility(markers[currentMarkerIndex], mainScrollable);
-        if (!visible) {
-            scrollToPosition(mainScrollable, scrollPosition);
-        }
+        const { scrollPosition } = markers[currentMarkerIndex];
+        scrollToPosition(mainScrollable, scrollPosition);
     }
 
-    // Trigger marker click (for any side-effects you want)
     markers[currentMarkerIndex].marker.click();
-}
-
-// Check if the marker is in the visible range
-function calculateMarkerVisibility(marker, scrollableElement) {
-    const { scrollPosition } = marker;
-    const scrollTop = scrollableElement.scrollTop;
-    const clientHeight = scrollableElement.clientHeight;
-    
-    const visible = scrollPosition >= scrollTop && scrollPosition <= (scrollTop + clientHeight);
-    return { scrollPosition, visible };
 }
 
 /********************************************
  * SCROLL & DOM HELPERS
  ********************************************/
-// Smoothly scroll to a specified position
 function scrollToPosition(element, position) {
     element.scrollTo({ top: position, behavior: 'smooth' });
 }
 
-// Retrieve the main scrollable element (prioritizing largest scrollable area)
 function getMainScrollableElement() {
     const scrollableElements = Array.from(document.querySelectorAll('*'))
         .filter(el => {
             const styles = getComputedStyle(el);
             const rect = el.getBoundingClientRect();
             return (
-                el.scrollHeight > el.clientHeight && 
-                ['scroll', 'auto'].includes(styles.overflowY) && 
-                rect.height > 0 && rect.width > 0 &&
-                !el.closest('nav') // exclude nav
+                el.scrollHeight > el.clientHeight &&
+                ['scroll', 'auto'].includes(styles.overflowY) &&
+                rect.width > 0 && rect.height > 0
             );
         });
 
-    // Sort by scrollable content size, then visible area
-    const sortedElements = scrollableElements.sort((a, b) => {
+    const sorted = scrollableElements.sort((a, b) => {
         const aRect = a.getBoundingClientRect();
         const bRect = b.getBoundingClientRect();
-        
         const aScrollSize = a.scrollHeight - a.clientHeight;
         const bScrollSize = b.scrollHeight - b.clientHeight;
-
-        const aVisibleArea = aRect.height * aRect.width;
-        const bVisibleArea = bRect.height * bRect.width;
+        const aVisibleArea = aRect.width * aRect.height;
+        const bVisibleArea = bRect.width * bRect.height;
 
         return (bScrollSize - aScrollSize) || (bVisibleArea - aVisibleArea);
     });
 
-    return sortedElements[0] || null;
+    return sorted[0] || null;
 }
 
 /********************************************
  * RESET MARKERS ON SPECIFIC EVENTS
  ********************************************/
-document.addEventListener('click', ({ target }) => {
-    // If the user clicks navigation or "New chat", remove all markers
+document.addEventListener('click', async (e) => {
+    const target = e.target;
     if (target.closest('nav') || target.closest('button[aria-label="New chat"]')) {
-        const mainScrollable = getMainScrollableElement();
-        if (mainScrollable) {
-            mainScrollable.querySelectorAll('.scroll-marker').forEach(el => el.remove());
-        }
+        markerTrack.querySelectorAll('.scroll-marker').forEach(m => m.remove());
         markers.length = 0;
         currentMarkerIndex = 0;
         updateDeleteButtonState();
+        await loadMarkersForCurrentUrl();
     }
 });
 
@@ -364,43 +466,60 @@ function updateIslandStyles() {
     }
 }
 
-// Initial mode check
+// Initial check
 updateIslandStyles();
 
-// Observe <html> for class changes (e.g., toggling dark mode)
-const observer = new MutationObserver((mutationsList) => {
+// Observe for class changes on <html> (e.g. dark mode toggles)
+const darkObserver = new MutationObserver((mutationsList) => {
     for (const mutation of mutationsList) {
         if (mutation.attributeName === 'class') {
             updateIslandStyles();
         }
     }
 });
-observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
 /********************************************
  * MESSAGES FROM THE CHROME EXTENSION
  ********************************************/
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === "hide_widget") {
-        const widget = document.querySelector('.island');
-        if (widget) {
-            widget.style.display = "none";
-        }
+chrome.runtime.onMessage.addListener((msg, sender, resp) => {
+    if (msg.action === "hide_widget") {
+        controlsContainer.style.display = "none";
+        markerTrack.style.display = "none";
     }
-    else if (message.action === "show_widget") {
-        const widget = document.querySelector('.island');
-        if (widget) {
-            widget.style.display = "";
-        }
+    else if (msg.action === "show_widget") {
+        controlsContainer.style.display = "";
+        markerTrack.style.display = "";
     }
-    else if (message.action === "colour_change") {
-        // Update the current marker color
-        currentMarkerColor = message.color;
-
-        // Update all existing scroll markers
+    else if (msg.action === "colour_change") {
+        currentMarkerColor = msg.color;
         const scrollMarkers = document.querySelectorAll('.scroll-marker');
-        scrollMarkers.forEach(marker => {
-            marker.style.backgroundColor = currentMarkerColor;
+        scrollMarkers.forEach(m => {
+            m.style.backgroundColor = currentMarkerColor;
         });
     }
+});
+
+/********************************************
+ * WAIT FOR MAIN SCROLLABLE, THEN INIT
+ ********************************************/
+function waitForMainScrollableElement() {
+    return new Promise((resolve) => {
+        let el = getMainScrollableElement();
+        if (el) return resolve(el);
+
+        const obs = new MutationObserver(() => {
+            el = getMainScrollableElement();
+            if (el) {
+                obs.disconnect();
+                resolve(el);
+            }
+        });
+        obs.observe(document.documentElement, { childList: true, subtree: true });
+    });
+}
+
+waitForMainScrollableElement().then(() => {
+    console.log("Found main scrollable; loading markers...");
+    loadMarkersForCurrentUrl();
 });

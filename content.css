@@ -68,12 +68,12 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     cursor: pointer;
     transition: transform 0.2s, opacity 0.2s;
-}
-
-.scroll-marker:hover {
+  }
+  .scroll-marker:hover {
     transform: scale(1.2);
     opacity: 0.9;
-}
+  }
+  
 
 /* Delete Button */
 .delete-btn.active {
