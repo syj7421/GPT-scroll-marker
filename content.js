@@ -6,6 +6,7 @@ const markersLimit = 20;
 let currentMarkerIndex = 0;
 let isDeleteMode = false;
 let currentMarkerColor = "#1385ff"; // Default color for markers
+const MAX_URL_ENTRIES = 50;
 
 /********************************************
  * MAIN UI ELEMENTS (CONTROLS & TOOLTIP)
@@ -144,15 +145,19 @@ function handleCreateMarker() {
     markers.push({ marker, scrollPosition });
     updateMarkers(mainScrollable);
     updateDeleteButtonState();
+
+    saveMarkersToLocalStorage();
+
 }
 
 // Delete a marker
 function deleteMarker(markerElement) {
-    const index = markers.findIndex(({ marker }) => marker === markerElement);
-    if (index > -1) {
-        markers.splice(index, 1);
+    const idx = markers.findIndex(m => m.marker === markerElement);
+    if (idx > -1) {
+        markers.splice(idx, 1);
         markerElement.remove();
         updateDeleteButtonState();
+        saveMarkersToLocalStorage();
     }
 }
 
@@ -403,4 +408,119 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             marker.style.backgroundColor = currentMarkerColor;
         });
     }
+});
+/********************************************
+ * LOCAL STORAGE
+ ********************************************/
+function getCurrentChatUrl() {
+    return window.location.href;
+}
+
+/** Load markers from local storage for the current URL. */
+async function loadMarkersForCurrentUrl() {
+    const currentUrl = getCurrentChatUrl();
+    try {
+        const data = await chrome.storage.local.get([currentUrl]);
+        console.log("Loaded markers:", data[currentUrl]);
+        const stored = data[currentUrl] || [];
+
+        markers.length = 0; // Clear in-memory
+
+        const mainScrollable = getMainScrollableElement();
+        if (!mainScrollable) {
+            console.log("No main scrollable found, cannot create markers yet.");
+            return;
+        }
+
+        // Re-create markers from stored data
+        stored.forEach(m => {
+            const { scrollPosition, ratio, color } = m;
+            const mainScrollable = getMainScrollableElement();
+            if (!mainScrollable) return;
+            const totalScrollableHeight = mainScrollable.scrollHeight;
+            const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable);
+
+            marker.style.backgroundColor = color || currentMarkerColor;
+
+            // Add click event
+            marker.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (isDeleteMode) {
+                    deleteMarker(marker);
+                } else {
+                    scrollToPosition(mainScrollable, scrollPosition);
+                }
+            });
+
+            markers.push({ marker, scrollPosition, ratio });
+        });
+
+        updateMarkers(mainScrollable);        // pin them into markerTrack
+        updateDeleteButtonState();
+    } catch (err) {
+        console.error("Error loading markers:", err);
+    }
+}
+
+/** Save markers to local storage for the current URL. */
+async function saveMarkersToLocalStorage() {
+    const currentUrl = getCurrentChatUrl();
+    const toStore = markers.map(m => ({
+        scrollPosition: m.scrollPosition,
+        ratio: m.ratio,
+        color: m.marker.style.backgroundColor
+    }));
+
+    const dataToStore = { [currentUrl]: toStore };
+    console.log("Saving markers:", dataToStore);
+
+    try {
+        await chrome.storage.local.set(dataToStore);
+        await checkAndEvictIfNeeded(currentUrl);
+    } catch (err) {
+        console.error("Error saving markers:", err);
+    }
+}
+
+/** Evict older URLs if we exceed MAX_URL_ENTRIES. */
+async function checkAndEvictIfNeeded(currentUrl) {
+    try {
+        const allData = await chrome.storage.local.get(null);
+        const allKeys = Object.keys(allData);
+
+        if (allKeys.length > MAX_URL_ENTRIES) {
+            const oldestUrl = allKeys[0];
+            if (oldestUrl !== currentUrl) {
+                await chrome.storage.local.remove(oldestUrl);
+            } else if (allKeys.length > 1) {
+                await chrome.storage.local.remove(allKeys[1]);
+            }
+        }
+    } catch (err) {
+        console.error("Error evicting old keys:", err);
+    }
+}
+
+/********************************************
+ * WAIT FOR MAIN SCROLLABLE, THEN INIT
+ ********************************************/
+function waitForMainScrollableElement() {
+    return new Promise((resolve) => {
+        let el = getMainScrollableElement();
+        if (el) return resolve(el);
+
+        const obs = new MutationObserver(() => {
+            el = getMainScrollableElement();
+            if (el) {
+                obs.disconnect();
+                resolve(el);
+            }
+        });
+        obs.observe(document.documentElement, { childList: true, subtree: true });
+    });
+}
+
+waitForMainScrollableElement().then(() => {
+    console.log("Found main scrollable; loading markers...");
+    loadMarkersForCurrentUrl();
 });
