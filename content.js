@@ -377,14 +377,14 @@ async function loadMarkersForCurrentUrl() {
     const currentUrl = getCurrentChatUrl();
     try {
         const data = await chrome.storage.local.get([currentUrl]);
-        console.log("Loaded markers:", data[currentUrl]);
+        // console.log("Loaded markers:", data[currentUrl]);
         const stored = data[currentUrl] || [];
 
         markers.length = 0; // Clear in-memory
 
         const mainScrollable = getMainScrollableElement();
         if (!mainScrollable) {
-            console.log("No main scrollable found, cannot create markers yet.");
+            // console.log("No main scrollable found, cannot create markers yet.");
             return;
         }
         chrome.storage.local.get(["selectedColor"], (data) => {
@@ -425,7 +425,7 @@ async function saveMarkersToLocalStorage() {
         color: m.marker.style.backgroundColor
     }));
     const dataToStore = { [currentUrl]: toStore };
-    console.log("Saving markers:", dataToStore);
+    // console.log("Saving markers:", dataToStore);
 
     try {
         await chrome.storage.local.set(dataToStore);
@@ -464,7 +464,7 @@ async function checkAndEvictIfNeeded(currentUrl) {
 async function initOrReinitMarkers() {
     // Wait for main scrollable to exist
     await waitForMainScrollableElement();
-    console.log("Main scrollable found; loading markers...");
+    // console.log("Main scrollable found; loading markers...");
     await loadMarkersForCurrentUrl();
     listenForContainerChanges();
 }
