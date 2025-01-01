@@ -387,12 +387,16 @@ async function loadMarkersForCurrentUrl() {
             console.log("No main scrollable found, cannot create markers yet.");
             return;
         }
+        chrome.storage.local.get(["selectedColor"], (data) => {
+            // The value is in data.selectedColor
+            currentMarkerColor = data.selectedColor;
+        });
+
 
         stored.forEach(m => {
             const { scrollPosition, ratio, color } = m;
             const totalScrollableHeight = mainScrollable.scrollHeight;
             const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable);
-            if (color) marker.style.backgroundColor = color;
 
             marker.addEventListener('click', (e) => {
                 e.stopPropagation();
