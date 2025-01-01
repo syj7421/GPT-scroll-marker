@@ -1,88 +1,188 @@
+/* Basic Page Styles */
 body {
     margin: 0;
-    padding: 0;
+    padding: 10px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9f9f9;
+    color: #333;
+    min-width: 330px;    /* Ensures enough width for mobile screens */
+    min-height: 400px;   /* Adjust as needed */
     display: flex;
     flex-direction: column;
-    align-items: center; /* Centers everything horizontally */
-    justify-content: center; /* Centers everything vertically */
-    min-width: 330px;
-    min-height: 350px; /* Set a minimum height */
-    overflow-y: auto; /* Add scroll if the content exceeds the popup size */
+    align-items: center;
+    /* Use 'center' instead of 'flex-start' to center vertically */
+    justify-content: center; 
+}
+
+/* Header (optional) */
+#header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#header-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+}
+
+#header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Optional description text */
+.description {
+    font-size: 15px;
+    color: #666;
+    margin: 0 0 10px 0;
+    text-align: center;
+    line-height: 1.4;
 }
 
 #wrapper {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center items */
-    justify-content: center;
-    gap: 15px; /* Adds spacing */
-    margin: 10px;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
 }
 
+/* Hide/Show Widget Button */
 #hide-the-widget-btn {
-    background-color: #1385ff;
+    background-image: linear-gradient(135deg, #1385ff, #0f70d1);
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
+    border-radius: 25px;
+    padding: 12px 24px;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    white-space: nowrap; /* Prevents text from wrapping */
-    text-align: center;  /* Centers text horizontally */
-    margin-left: 25px;
-    margin-right: 25px;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    white-space: nowrap; 
+    text-align: center;
 }
-
+  
 #hide-the-widget-btn:hover {
-    background-color: #0f70d1;
+    background-image: linear-gradient(135deg, #0f70d1, #0c5ba3);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
-
+  
 #hide-the-widget-btn:active {
-    background-color: #0c5ba3;
-    transform: scale(0.95);
+    transform: scale(0.98);
 }
 
+/* Color Picker Title (optional) */
+#color-picker-title {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0;
+    color: #555;
+}
+
+/* Color Picker */
 #color-picker {
     display: flex;
-    flex-wrap: wrap; /* Wrap items to the next line */
-    gap: 10px;
-    justify-content: center; /* Align items to center */
+    flex-wrap: nowrap;           
+    gap: 8px;                    
+    justify-content: center;     
+    align-items: center;         
+    overflow-x: auto;            
+    margin-bottom: 10px;
+    padding: 4px 0;             
 }
-
+  
 #color-picker label {
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
 }
-
+  
 #color-picker input[type="radio"] {
     display: none; /* Hide the actual radio input */
 }
-
+  
 .color-box {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     border: 2px solid transparent;
     border-radius: 4px;
-    display: inline-block;
     position: relative;
     cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+  
+.color-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Checkmark for selected color */
 #color-picker input[type="radio"]:checked + .color-box::after {
-    content: "✔"; /* Unicode checkmark character */
-    color: white; /* Color of the tick */
-    font-size: 20px;
+    content: "✔";
+    color: white;
+    font-size: 14px;
     font-weight: bold;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    pointer-events: none; /* Ensures it doesn’t interfere with clicks */
+    pointer-events: none;
 }
 
+/* (Optional) Dark Mode Toggle stub */
+#dark-mode-toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+  
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
+}
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 34px;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px; width: 16px;
+    left: 3px; top: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: #1385ff;
+}
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
 
+/* Footer Info */
+#footer-info {
+    margin-top: auto;       
+    font-size: 12px;        
+    text-align: center;     
+    color: #888;            
+}
