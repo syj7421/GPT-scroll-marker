@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Scroll Bookmark",
+  "name": "PinPointGPT",
   "version": "1.0",
   "description": "Add bookmarks to scroll positions.",
   "permissions": ["storage"],
