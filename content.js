@@ -501,19 +501,22 @@ function waitForMainScrollableElement() {
 function listenForContainerChanges() {
     const mainScrollable = getMainScrollableElement();
     if (!mainScrollable) return;
-
-    const containerObserver = new MutationObserver(() => {
-        // If the container is removed from DOM, re-init
-        if (!document.contains(mainScrollable)) {
-            containerObserver.disconnect();
-            initOrReinitMarkers();
-        }
+  
+    const containerObserver = new MutationObserver((mutations) => {
+      // If ChatGPT replaced or wiped out child nodes in a "refresh" operation
+      // you can detect that here.
+      const chatIsEmpty = mainScrollable.children.length === 0; 
+      if (chatIsEmpty) {
+        clearMarkers();
+        initOrReinitMarkers();
+      }
     });
-    containerObserver.observe(document.documentElement, {
-        childList: true,
-        subtree: true,
+  
+    containerObserver.observe(mainScrollable, {
+      childList: true, 
+      subtree: true,
     });
-}
+  }
 
 /********************************************
  * URL CHANGE DETECTION
