@@ -127,7 +127,7 @@ function handleCreateMarker() {
     markers.push({ marker, scrollPosition });
     updateMarkers(mainScrollable);
     updateDeleteButtonState();
-    saveMarkersToLocalStorage();
+    saveMarkersToStorage();
 }
 
 function deleteMarker(markerElement) {
@@ -136,7 +136,7 @@ function deleteMarker(markerElement) {
         markers.splice(idx, 1);
         markerElement.remove();
         updateDeleteButtonState();
-        saveMarkersToLocalStorage();
+        saveMarkersToStorage();
     }
 }
 
@@ -367,7 +367,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 /********************************************
- * LOCAL STORAGE
+ * SYNC STORAGE (instead of local)
  ********************************************/
 function getCurrentChatUrl() {
     return window.location.href;
@@ -376,7 +376,7 @@ function getCurrentChatUrl() {
 async function loadMarkersForCurrentUrl() {
     const currentUrl = getCurrentChatUrl();
     try {
-        const data = await chrome.storage.local.get([currentUrl]);
+        const data = await chrome.storage.sync.get([currentUrl]);
         // console.log("Loaded markers:", data[currentUrl]);
         const stored = data[currentUrl] || [];
 
@@ -387,16 +387,21 @@ async function loadMarkersForCurrentUrl() {
             // console.log("No main scrollable found, cannot create markers yet.");
             return;
         }
-        chrome.storage.local.get(["selectedColor"], (data) => {
+        chrome.storage.sync.get(["selectedColor"], (data) => {
             // The value is in data.selectedColor
-            currentMarkerColor = data.selectedColor;
+            if (data.selectedColor) {
+                currentMarkerColor = data.selectedColor;
+            }
         });
-
 
         stored.forEach(m => {
             const { scrollPosition, ratio, color } = m;
             const totalScrollableHeight = mainScrollable.scrollHeight;
             const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable);
+
+            if (color) {
+                marker.style.backgroundColor = color;
+            }
 
             marker.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -417,7 +422,7 @@ async function loadMarkersForCurrentUrl() {
     }
 }
 
-async function saveMarkersToLocalStorage() {
+async function saveMarkersToStorage() {
     const currentUrl = getCurrentChatUrl();
     const toStore = markers.map(m => ({
         scrollPosition: m.scrollPosition,
@@ -428,7 +433,7 @@ async function saveMarkersToLocalStorage() {
     // console.log("Saving markers:", dataToStore);
 
     try {
-        await chrome.storage.local.set(dataToStore);
+        await chrome.storage.sync.set(dataToStore);
         await checkAndEvictIfNeeded(currentUrl);
     } catch (err) {
         console.error("Error saving markers:", err);
@@ -437,15 +442,15 @@ async function saveMarkersToLocalStorage() {
 
 async function checkAndEvictIfNeeded(currentUrl) {
     try {
-        const allData = await chrome.storage.local.get(null);
+        const allData = await chrome.storage.sync.get(null);
         const allKeys = Object.keys(allData);
 
         if (allKeys.length > MAX_URL_ENTRIES) {
             const oldestUrl = allKeys[0];
             if (oldestUrl !== currentUrl) {
-                await chrome.storage.local.remove(oldestUrl);
+                await chrome.storage.sync.remove(oldestUrl);
             } else if (allKeys.length > 1) {
-                await chrome.storage.local.remove(allKeys[1]);
+                await chrome.storage.sync.remove(allKeys[1]);
             }
         }
     } catch (err) {
