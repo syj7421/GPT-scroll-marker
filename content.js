@@ -26,37 +26,37 @@ if (!tooltip) {
 }
 
 const buttons = [
-    { 
+    {
         label: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
                     <path fill="currentColor" d="M8 1c.552 0 1 .448 1 1v5h5c.552 0 1 .448 1 1s-.448 1-1 1H9v5c0 .552-.448 1-1 1s-1-.448-1-1V9H2c-.552 0-1-.448-1-1s.448-1 1-1h5V2c0-.552.448-1 1-1z"/>
                </svg>`,
-        action: handleCreateMarker, 
+        action: handleCreateMarker,
         className: 'create-btn',
-        tooltip: 'Add a marker at the current position' 
+        tooltip: 'Add a marker at the current position'
     },
-    { 
+    {
         label: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
                     <path fill="currentColor" d="M2.5 3a.5.5 0 0 1 .5-.5H5V1a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1h2a.5.5 0 0 1 0 1H2a.5.5 0 0 1 0-1zM3 4h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4z"/>
                </svg>`,
-        action: toggleDeleteMode, 
+        action: toggleDeleteMode,
         className: 'delete-btn',
-        tooltip: 'To delete markers: Click this button, then click on the markers you want to remove!' 
+        tooltip: 'To delete markers: Click this button, then click on the markers you want to remove!'
     },
-    { 
+    {
         label: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
                     <path fill="currentColor" d="M8 15.5a.5.5 0 0 1-.5-.5V3.707L3.854 7.354a.5.5 0 1 1-.708-.708l4.5-4.5a.5.5 0 0 1 .708 0l4.5 4.5a.5.5 0 1 1-.708.708L8.5 3.707V15a.5.5 0 0 1-.5.5z"/>
                </svg>`,
-        action: () => navigateMarkers(-1), 
+        action: () => navigateMarkers(-1),
         className: 'up-btn',
-        tooltip: 'Go to the previous marker' 
+        tooltip: 'Go to the previous marker'
     },
-    { 
+    {
         label: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
                     <path fill="currentColor" d="M8 .5a.5.5 0 0 1 .5.5v11.293l3.646-3.647a.5.5 0 1 1 .708.708l-4.5 4.5a.5.5 0 0 1-.708 0l-4.5-4.5a.5.5 0 1 1-.708-.708L7.5 12.293V1a.5.5 0 0 1 .5-.5z"/>
                </svg>`,
-        action: () => navigateMarkers(1), 
+        action: () => navigateMarkers(1),
         className: 'down-btn',
-        tooltip: 'Go to the next marker' 
+        tooltip: 'Go to the next marker'
     }
 ];
 
@@ -143,15 +143,73 @@ function deleteMarker(markerElement) {
 /********************************************
  * MARKER VISUALS & UPDATING
  ********************************************/
-function createMarkerElement(scrollPosition, totalScrollableHeight, scrollableElement) {
+function createMarkerElement(scrollPosition, totalScrollableHeight, scrollableElement, storedTitle) {
     const marker = document.createElement('button');
     marker.className = 'scroll-marker';
     marker.style.position = 'absolute';
+
+    // Create a tooltip box for entering title
+    const tooltipBox = document.createElement('div');
+    tooltipBox.className = 'tooltip-box';
+    tooltipBox.style.display = 'none'; // Ensure it's initially visible for input
+
+    // Create an input field inside the tooltip box
+    const inputField = document.createElement('input');
+    inputField.style.backgroundColor = 'transparent';
+    inputField.style.border = 'transparent';
+    inputField.style.outline = 'none';
+    inputField.type = 'text';
+    inputField.placeholder = 'Enter title';
+    tooltipBox.appendChild(inputField);
+
+    // If there's a stored title, display it directly without input
+    if (storedTitle) {
+        tooltipBox.textContent = storedTitle;
+        inputField.style.display = 'none'; // Hide input if title is already set
+    }
+
+    // Append tooltip box to marker
+    marker.appendChild(tooltipBox);
+
+    // Handle Enter key press to save the title
+    inputField.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            console.log(123)
+            const title = inputField.value;
+            if (title.trim() !== '') {
+                tooltipBox.style.display = 'none'; // Hide the tooltip box
+
+                // Save title to storage
+                saveMarkerTitleToStorage(scrollPosition, title);
+
+                // Add hover effect to show the title later
+                marker.addEventListener('mouseenter', () => {
+                    tooltipBox.style.display = 'block';
+                });
+
+                marker.addEventListener('mouseleave', () => {
+                    tooltipBox.style.display = 'none';
+                });
+
+                tooltipBox.textContent = title; // Set the tooltip content to the title
+            }
+        }
+    });
 
     marker.style.top = `${(scrollPosition / totalScrollableHeight) * 100}%`;
     const scrollBarWidth = scrollableElement.offsetWidth - scrollableElement.clientWidth;
     marker.style.right = `${scrollBarWidth + 5}px`;
     marker.style.backgroundColor = currentMarkerColor;
+
+    // Add mouse events to control the display of the tooltip box
+    marker.addEventListener('mouseenter', () => {
+        tooltipBox.style.display = 'block';
+    });
+
+    marker.addEventListener('mouseleave', () => {
+        tooltipBox.style.display = 'none';
+    });
+
     return marker;
 }
 
@@ -395,9 +453,9 @@ async function loadMarkersForCurrentUrl() {
         });
 
         stored.forEach(m => {
-            const { scrollPosition, ratio, color } = m;
+            const { scrollPosition, ratio, color, title } = m;
             const totalScrollableHeight = mainScrollable.scrollHeight;
-            const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable);
+            const marker = createMarkerElement(scrollPosition, totalScrollableHeight, mainScrollable, title);
 
             if (color) {
                 marker.style.backgroundColor = color;
@@ -427,7 +485,8 @@ async function saveMarkersToStorage() {
     const toStore = markers.map(m => ({
         scrollPosition: m.scrollPosition,
         ratio: m.ratio,
-        color: m.marker.style.backgroundColor
+        color: m.marker.style.backgroundColor,
+        title: m.marker.querySelector('.tooltip-box').textContent || ''
     }));
     const dataToStore = { [currentUrl]: toStore };
     // console.log("Saving markers:", dataToStore);
@@ -437,6 +496,28 @@ async function saveMarkersToStorage() {
         await checkAndEvictIfNeeded(currentUrl);
     } catch (err) {
         console.error("Error saving markers:", err);
+    }
+}
+
+async function saveMarkerTitleToStorage(scrollPosition, title) {
+    const currentUrl = getCurrentChatUrl();
+    try {
+        const data = await chrome.storage.sync.get([currentUrl]);
+        const storedMarkers = data[currentUrl] || [];
+
+        // Find the marker with the same scrollPosition and update its title
+        const markerIndex = storedMarkers.findIndex(m => m.scrollPosition === scrollPosition);
+        if (markerIndex !== -1) {
+            storedMarkers[markerIndex].title = title;
+        } else {
+            storedMarkers.push({ scrollPosition, title });
+        }
+
+        // Save updated markers
+        const dataToStore = { [currentUrl]: storedMarkers };
+        await chrome.storage.sync.set(dataToStore);
+    } catch (err) {
+        console.error("Error saving marker title:", err);
     }
 }
 
@@ -501,22 +582,22 @@ function waitForMainScrollableElement() {
 function listenForContainerChanges() {
     const mainScrollable = getMainScrollableElement();
     if (!mainScrollable) return;
-  
+
     const containerObserver = new MutationObserver((mutations) => {
-      // If ChatGPT replaced or wiped out child nodes in a "refresh" operation
-      // you can detect that here.
-      const chatIsEmpty = mainScrollable.children.length === 0; 
-      if (chatIsEmpty) {
-        clearMarkers();
-        initOrReinitMarkers();
-      }
+        // If ChatGPT replaced or wiped out child nodes in a "refresh" operation
+        // you can detect that here.
+        const chatIsEmpty = mainScrollable.children.length === 0;
+        if (chatIsEmpty) {
+            clearMarkers();
+            initOrReinitMarkers();
+        }
     });
-  
+
     containerObserver.observe(mainScrollable, {
-      childList: true, 
-      subtree: true,
+        childList: true,
+        subtree: true,
     });
-  }
+}
 
 /********************************************
  * URL CHANGE DETECTION

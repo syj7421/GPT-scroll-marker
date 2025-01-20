@@ -93,8 +93,35 @@
     padding: 6px 8px;
     border-radius: 4px;
     white-space: nowrap;
-    pointer-events: none;
+    pointer-events: auto;
     transition: opacity 0.1s ease-in-out;
+}
+
+.tooltip-box {
+    position: absolute;
+    display: none;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: auto;
+    transition: opacity 0.1s ease-in-out;
+    top: 0; 
+    right: 100%;
+    margin-right: 10px;
+}
+
+.input-field {
+    background-color: black; /* 黑色背景 */
+    color: white; /* 白色文字 */
+    border: 1px solid #333; /* 添加黑色边框 */
+    padding: 6px 8px; /* 内边距，让输入框内容不至于紧贴边框 */
+    font-size: 14px; /* 设置合适的字体大小 */
+    width: 100%; /* 让输入框宽度填满容器 */
+    outline: none; /* 移除聚焦时的蓝色边框 */
 }
 
 button {

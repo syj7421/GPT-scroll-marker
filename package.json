@@ -1,0 +1,26 @@
+{
+  "name": "scroll-mark",
+  "version": "1.0.0",
+  "description": "",
+  "main": "content.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/syj7421/scroll-mark.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/syj7421/scroll-mark/issues"
+  },
+  "homepage": "https://github.com/syj7421/scroll-mark#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "eslint": "^9.18.0",
+    "globals": "^15.14.0",
+    "live-server": "^1.2.2"
+  }
+}
