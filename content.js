@@ -161,39 +161,39 @@ function createMarkerElement(scrollPosition, totalScrollableHeight, clientHeight
     tooltipBox.className = 'tooltip-box';
     tooltipBox.style.display = 'none';
 
-    // Input field for marker title
-    const inputField = document.createElement('input');
-    inputField.style.backgroundColor = 'transparent';
-    inputField.style.border = 'none';
-    inputField.style.outline = 'none';
-    inputField.type = 'text';
-    inputField.placeholder = 'Enter title';
-    tooltipBox.appendChild(inputField);
+    // // Input field for marker title
+    // const inputField = document.createElement('input');
+    // inputField.style.backgroundColor = 'transparent';
+    // inputField.style.border = 'none';
+    // inputField.style.outline = 'none';
+    // inputField.type = 'text';
+    // inputField.placeholder = 'Enter title';
+    // tooltipBox.appendChild(inputField);
 
-    // If a stored title is provided, display it instead of the input
-    if (storedTitle) {
-        tooltipBox.textContent = storedTitle;
-        inputField.style.display = 'none';
-    }
+    // // If a stored title is provided, display it instead of the input
+    // if (storedTitle) {
+    //     tooltipBox.textContent = storedTitle;
+    //     inputField.style.display = 'none';
+    // }
 
     marker.appendChild(tooltipBox);
 
-    inputField.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            const title = inputField.value.trim();
-            if (title !== '') {
-                tooltipBox.style.display = 'none';
-                saveMarkerTitleToStorage(scrollPosition, title);
-                marker.addEventListener('mouseenter', () => tooltipBox.style.display = 'block');
-                marker.addEventListener('mouseleave', () => tooltipBox.style.display = 'none');
-                tooltipBox.textContent = title;
-            }
-        }
-    });
+    // inputField.addEventListener('keydown', (event) => {
+    //     if (event.key === 'Enter') {
+    //         const title = inputField.value.trim();
+    //         if (title !== '') {
+    //             tooltipBox.style.display = 'none';
+    //             saveMarkerTitleToStorage(scrollPosition, title);
+    //             marker.addEventListener('mouseenter', () => tooltipBox.style.display = 'block');
+    //             marker.addEventListener('mouseleave', () => tooltipBox.style.display = 'none');
+    //             tooltipBox.textContent = title;
+    //         }
+    //     }
+    // });
 
     // Compute the ratio relative to the scrollable range and position the marker
     const ratio = totalScrollableHeight > clientHeight 
-                  ? (scrollPosition / (totalScrollableHeight - clientHeight)) 
+                  ? (scrollPosition / (totalScrollableHeight )) 
                   : 0;
     marker.style.top = `${ratio * 100}%`;
     const scrollBarWidth = scrollableElement.offsetWidth - scrollableElement.clientWidth;
@@ -406,7 +406,7 @@ async function loadMarkersForCurrentUrl(mainScrollable) {
         );
         const stored = data[currentUrl] || [];
         markers.length = 0; // Clear in-memory markers
-        console.log("markers:", stored.length, stored);
+        // console.log("markers:", stored.length, stored);
 
         // Load user-selected marker color (if any)
         chrome.storage.sync.get(["selectedColor"], (data) => {
@@ -515,14 +515,14 @@ function waitForMainScrollableElement() {
     return new Promise((resolve) => {
         const immediateCheck = getMainScrollableElement();
         if (immediateCheck) {
-            console.log("Found scrollable container:", immediateCheck);
+            // console.log("Found scrollable container:", immediateCheck);
             resolve(immediateCheck);
             return;
         }
         const obs = new MutationObserver(() => {
             const el = getMainScrollableElement();
             if (el) {
-                console.log("Found scrollable container via observer:", el);
+                // console.log("Found scrollable container via observer:", el);
                 obs.disconnect();
                 resolve(el);
             }
@@ -537,7 +537,7 @@ function waitForMainScrollableElement() {
 function attachResizeObserver(element) {
     if (!element) return;
     const resizeObserver = new ResizeObserver(() => {
-        console.log('ResizeObserver: container resized.', element.scrollHeight);
+        // console.log('ResizeObserver: container resized.', element.scrollHeight);
         repositionMarkersIfNeeded();
     });
     resizeObserver.observe(element);
@@ -562,7 +562,7 @@ function repositionMarkersIfNeeded() {
         // m.scrollPosition is the absolute pixel offset (unchanged)
         // Recompute ratio relative to the new scrollable range:
         const newRatio = newScrollHeight > clientHeight 
-                         ? m.scrollPosition / (newScrollHeight - clientHeight) 
+                         ? m.scrollPosition / (newScrollHeight ) 
                          : 0;
         m.ratio = newRatio; // update stored ratio if desired
         // Update marker's top position based on the new ratio (as a percentage)
