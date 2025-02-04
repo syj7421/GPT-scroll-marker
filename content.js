@@ -245,7 +245,7 @@ function getMainScrollableElement() {
     return (elem.scrollHeight > elem.clientHeight &&
             ['scroll', 'auto'].includes(style.overflowY) &&
             rect.width > 0 && rect.height > 0 &&
-            !elem.closest('nav'));
+            !elem.closest('nav')) && !elem.closest('#composer-background');;
   });
   return candidates.sort((a, b) =>
     (b.scrollHeight - b.clientHeight) - (a.scrollHeight - a.clientHeight)
