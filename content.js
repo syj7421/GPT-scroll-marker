@@ -252,6 +252,7 @@ function getMainScrollableElement() {
   )[0] || null;
 }
 
+
 /********************************************
  * RESET & REPOSITION
  ********************************************/
@@ -266,6 +267,8 @@ function clearMarkers() {
 }
 
 function repositionMarkers() {
+
+  console.log("it is called");
   const scrollable = getMainScrollableElement();
   if (!scrollable) return;
   const totalHeight = scrollable.scrollHeight;
@@ -402,11 +405,11 @@ function checkAndEvictIfNeeded(currentUrl) {
 /********************************************
  * INIT & RE-INIT LOGIC
  ********************************************/
-function initMarkers() {
-  waitForMainScrollableElement().then(scrollable => {
-    loadMarkersForCurrentUrl(scrollable);
-    new ResizeObserver(repositionMarkers).observe(scrollable);
-  });
+async function initMarkers() {
+  const scrollable = await waitForMainScrollableElement();
+  loadMarkersForCurrentUrl(scrollable);
+  new ResizeObserver(repositionMarkers).observe(scrollable);
+  new MutationObserver(repositionMarkers).observe(scrollable.firstChild,  { childList: true, subtree: true });
 }
 
 function handleChatChange() {
@@ -414,13 +417,13 @@ function handleChatChange() {
   initMarkers();
 }
 
-function waitForMainScrollableElement() {
+async function waitForMainScrollableElement() {
+  // If the element is there, return immediately.
+  const existingEl = getMainScrollableElement();
+  if (existingEl) return existingEl;
+
+  // Otherwise, wait for it to appear in the DOM.
   return new Promise(resolve => {
-    const el = getMainScrollableElement();
-    if (el) {
-      resolve(el);
-      return;
-    }
     const observer = new MutationObserver(() => {
       const el = getMainScrollableElement();
       if (el) {
@@ -431,6 +434,7 @@ function waitForMainScrollableElement() {
     observer.observe(document.documentElement, { childList: true, subtree: true });
   });
 }
+
 
 /********************************************
  * URL CHANGE DETECTION
