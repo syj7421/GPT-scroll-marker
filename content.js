@@ -14,6 +14,16 @@ let currentMarkerColor = "#1385ff"; // Default marker color
 let cachedScrollable = null;
 
 /********************************************
+ * Load Global Marker Color from Storage
+ ********************************************/
+// When the content script loads, get the stored global marker color
+chrome.storage.local.get(["selectedColor"], (data) => {
+  if (data.selectedColor) {
+    currentMarkerColor = data.selectedColor;
+  }
+});
+
+/********************************************
  * HELPER FUNCTIONS
  ********************************************/
 const qs = (sel, root = document) => root.querySelector(sel);
@@ -184,6 +194,7 @@ function createMarkerElement(scrollPosition, ratio, container, storedLabel = '')
   marker.style.position = 'absolute';
   marker.style.top = `${ratio * 100}%`;
   marker.style.right = `${container.offsetWidth - container.clientWidth + 5}px`;
+  // Always use the global marker color
   marker.style.backgroundColor = currentMarkerColor;
 
   const markerLabel = document.createElement('div');
@@ -209,7 +220,7 @@ function createMarkerElement(scrollPosition, ratio, container, storedLabel = '')
     markerLabel.focus();
   });
 
-  // Enforce 5-line limit
+  // Enforce 5-line limit for marker label
   const maxLines = 5;
   markerLabel.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
@@ -417,6 +428,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.action === "show_widget") {
     controlsContainer.style.display = "";
   } else if (message.action === "colour_change") {
+    // Update the global marker color and repaint all markers
     currentMarkerColor = message.color;
     qsa('.scroll-marker').forEach(marker => {
       marker.style.backgroundColor = currentMarkerColor;
@@ -441,7 +453,8 @@ function loadMarkersForCurrentUrl(scrollable) {
         ? m.scrollPosition / scrollable.scrollHeight
         : 0;
       const markerEl = createMarkerElement(m.scrollPosition, ratio, scrollable, m.title);
-      if (m.color) markerEl.style.backgroundColor = m.color;
+      // Always use the global marker color
+      markerEl.style.backgroundColor = currentMarkerColor;
       markerEl.addEventListener('click', e => {
         e.stopPropagation();
         isDeleteMode
@@ -457,9 +470,9 @@ function loadMarkersForCurrentUrl(scrollable) {
 
 function saveMarkersToStorage() {
   const currentUrl = getCurrentChatUrl();
+  // Save only scroll position and label; the marker color is global.
   const dataToStore = markers.map(m => ({
     scrollPosition: m.scrollPosition,
-    color: m.marker.style.backgroundColor,
     title: qs('.marker-label', m.marker).textContent || ''
   }));
   chrome.storage.sync.set({ [currentUrl]: dataToStore }, () => {
@@ -497,9 +510,15 @@ async function waitForMainScrollableElement() {
 
 async function initMarkers() {
   const scrollable = await waitForMainScrollableElement();
-  loadMarkersForCurrentUrl(scrollable);
-  new ResizeObserver(debounceRepositionMarkers).observe(scrollable);
-  new MutationObserver(debounceRepositionMarkers).observe(scrollable.firstChild, { childList: true, subtree: true });
+  // Load the global marker color from storage (in case it was updated)
+  chrome.storage.local.get(["selectedColor"], (data) => {
+    if (data.selectedColor) {
+      currentMarkerColor = data.selectedColor;
+    }
+    loadMarkersForCurrentUrl(scrollable);
+    new ResizeObserver(debounceRepositionMarkers).observe(scrollable);
+    new MutationObserver(debounceRepositionMarkers).observe(scrollable.firstChild, { childList: true, subtree: true });
+  });
 }
 
 function handleChatChange() {
@@ -518,7 +537,6 @@ setInterval(() => {
 /********************************************
  * ENSURE CONTROLS & MARKERS REMAIN IN THE DOM
  ********************************************/
-// Combined check every 3 seconds to reduce overhead
 setInterval(() => {
   if (!document.body.contains(controlsContainer)) {
     document.body.appendChild(controlsContainer);
