@@ -17,7 +17,7 @@ let cachedScrollable = null;
  * Load Global Marker Color from Storage
  ********************************************/
 // When the content script loads, get the stored global marker color
-chrome.storage.local.get(["selectedColor"], (data) => {
+chrome.storage.sync.get(["selectedColor"], (data) => {
   if (data.selectedColor) {
     currentMarkerColor = data.selectedColor;
   }
@@ -511,7 +511,7 @@ async function waitForMainScrollableElement() {
 async function initMarkers() {
   const scrollable = await waitForMainScrollableElement();
   // Load the global marker color from storage (in case it was updated)
-  chrome.storage.local.get(["selectedColor"], (data) => {
+  chrome.storage.sync.get(["selectedColor"], (data) => {
     if (data.selectedColor) {
       currentMarkerColor = data.selectedColor;
     }
