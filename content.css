@@ -83,7 +83,6 @@
     transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-/* Tooltip */
 .tooltip {
     position: absolute;
     display: none;
@@ -96,6 +95,34 @@
     pointer-events: none;
     transition: opacity 0.1s ease-in-out;
 }
+
+.marker-label {
+background-color: black;
+color: white;
+padding: 5px 8px;
+font-size: 12px;
+border-radius: 4px;
+position: absolute;
+white-space: nowrap;
+cursor: text;
+display: none; /* initially hidden */
+/* Position the label to the left of its parent marker */
+right: 100%;
+top: 50%;
+transform: translate(-5px, -50%);
+}
+  
+.marker-label::after {
+content: "";
+position: absolute;
+top: 50%;
+right: -6px;  /* increased from -5px */
+transform: translateY(-50%);
+border-width: 6px;  /* increased from 5px */
+border-style: solid;
+border-color: transparent transparent transparent black;
+}
+
 
 button {
     position: relative;

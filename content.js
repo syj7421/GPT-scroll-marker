@@ -18,7 +18,7 @@ const controlsContainer = document.createElement('div');
 controlsContainer.className = 'island';
 document.body.appendChild(controlsContainer);
 
-// Tooltip element
+// Tooltip element for control buttons
 let tooltip = document.getElementById('custom-tooltip');
 if (!tooltip) {
   tooltip = document.createElement('div');
@@ -75,7 +75,7 @@ buttons.forEach(({ label, action, className, tooltip: tipText }) => {
 });
 
 /********************************************
- * TOOLTIP FUNCTIONS
+ * TOOLTIP FUNCTIONS (for control buttons)
  ********************************************/
 function showTooltip(event, text) {
   tooltip.textContent = text;
@@ -89,7 +89,7 @@ function hideTooltip() {
 }
 
 /********************************************
- * MARKER CREATION & DELETION
+ * MARKER CREATION, LABEL & DELETION
  ********************************************/
 function handleCreateMarker() {
   const scrollable = getMainScrollableElement();
@@ -123,24 +123,14 @@ function handleCreateMarker() {
   saveMarkersToStorage();
 }
 
-function deleteMarker(markerEl) {
-  const idx = markers.findIndex(m => m.marker === markerEl);
-  if (idx > -1) {
-    markers.splice(idx, 1);
-    markerEl.remove();
-    updateDeleteButtonState();
-    saveMarkersToStorage();
-  }
-}
-
 /**
- * Creates a marker element.
+ * Creates a marker element along with its editable label.
  * @param {number} scrollPosition – The absolute scrollTop value.
- * @param {number} ratio – The computed ratio (scrollPosition / (scrollHeight - clientHeight)).
+ * @param {number} ratio – The computed ratio.
  * @param {HTMLElement} container – The scrollable container.
- * @param {string} [storedTitle=''] – Optional title to display.
+ * @param {string} [storedLabel=''] – Optional label text loaded from storage.
  */
-function createMarkerElement(scrollPosition, ratio, container, storedTitle = '') {
+function createMarkerElement(scrollPosition, ratio, container, storedLabel = '') {
   const marker = document.createElement('button');
   marker.className = 'scroll-marker';
   marker.style.position = 'absolute';
@@ -149,17 +139,74 @@ function createMarkerElement(scrollPosition, ratio, container, storedTitle = '')
   marker.style.right = `${scrollBarWidth + 5}px`;
   marker.style.backgroundColor = currentMarkerColor;
 
-  // Tooltip box (for displaying a title, if any)
-  const tooltipBox = document.createElement('div');
-  tooltipBox.className = 'tooltip-box';
-  tooltipBox.style.display = 'none';
-  if (storedTitle) tooltipBox.textContent = storedTitle;
-  marker.appendChild(tooltipBox);
+  // Create the marker label element using the "marker-label" class.
+  const markerLabel = document.createElement('div');
+  markerLabel.className = 'marker-label';
+  markerLabel.textContent = storedLabel;
+  markerLabel.style.display = 'none';
 
-  marker.addEventListener('mouseenter', () => tooltipBox.style.display = 'block');
-  marker.addEventListener('mouseleave', () => tooltipBox.style.display = 'none');
+  function showLabel() {
+    markerLabel.style.display = 'block';
+  }
+  function hideLabel(event) {
+    if (
+      !marker.contains(event.relatedTarget) &&
+      !markerLabel.contains(event.relatedTarget)
+    ) {
+      markerLabel.style.display = 'none';
+    }
+  }
 
+  marker.addEventListener('mouseenter', showLabel);
+  marker.addEventListener('mouseleave', hideLabel);
+  markerLabel.addEventListener('mouseenter', showLabel);
+  markerLabel.addEventListener('mouseleave', hideLabel);
+
+  // Make the label editable on click.
+  markerLabel.addEventListener('click', function(e) {
+    e.stopPropagation();
+    markerLabel.contentEditable = true;
+    markerLabel.focus();
+  });
+
+  // Enforce 5-line limit while typing
+  markerLabel.addEventListener('input', function () {
+    const maxLines = 5;
+    const lines = markerLabel.innerText.split('\n');
+
+    if (lines.length > maxLines) {
+      // Trim excess lines
+      markerLabel.innerText = lines.slice(0, maxLines).join('\n');
+      
+      // Move cursor to end
+      const range = document.createRange();
+      const selection = window.getSelection();
+      range.selectNodeContents(markerLabel);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  });
+
+  // Save the label when editing is finished.
+  markerLabel.addEventListener('blur', function() {
+    markerLabel.contentEditable = false;
+    saveMarkersToStorage();
+  });
+
+  marker.appendChild(markerLabel);
   return marker;
+}
+
+
+function deleteMarker(markerEl) {
+  const idx = markers.findIndex(m => m.marker === markerEl);
+  if (idx > -1) {
+    markers.splice(idx, 1);
+    markerEl.remove();
+    updateDeleteButtonState();
+    saveMarkersToStorage();
+  }
 }
 
 function updateMarkers(container) {
@@ -217,12 +264,12 @@ function navigateMarkers(direction) {
     const markerObj = markers[currentMarkerIndex];
     const scrollTop = scrollable.scrollTop;
     const clientHeight = scrollable.clientHeight;
-    // Scroll if the marker is not currently visible.
+    // Scroll if the marker is not visible.
     if (markerObj.scrollPosition < scrollTop || markerObj.scrollPosition > scrollTop + clientHeight) {
       scrollToPosition(scrollable, markerObj.scrollPosition);
     }
   }
-  // Optionally trigger the marker’s click to show its tooltip.
+  // Optionally trigger the marker's click to show its label.
   markers[currentMarkerIndex].marker.click();
 }
 
@@ -245,13 +292,12 @@ function getMainScrollableElement() {
     return (elem.scrollHeight > elem.clientHeight &&
             ['scroll', 'auto'].includes(style.overflowY) &&
             rect.width > 0 && rect.height > 0 &&
-            !elem.closest('nav')) && !elem.closest('#composer-background');;
+            !elem.closest('nav')) && !elem.closest('#composer-background');
   });
   return candidates.sort((a, b) =>
     (b.scrollHeight - b.clientHeight) - (a.scrollHeight - a.clientHeight)
   )[0] || null;
 }
-
 
 /********************************************
  * RESET & REPOSITION
@@ -267,8 +313,6 @@ function clearMarkers() {
 }
 
 function repositionMarkers() {
-
-  console.log("it is called");
   const scrollable = getMainScrollableElement();
   if (!scrollable) return;
   const totalHeight = scrollable.scrollHeight;
@@ -384,7 +428,7 @@ function saveMarkersToStorage() {
   const dataToStore = markers.map(m => ({
     scrollPosition: m.scrollPosition,
     color: m.marker.style.backgroundColor,
-    title: m.marker.querySelector('.tooltip-box').textContent || ''
+    title: m.marker.querySelector('.marker-label').textContent || ''
   }));
   chrome.storage.sync.set({ [currentUrl]: dataToStore }, () => {
     checkAndEvictIfNeeded(currentUrl);
@@ -434,7 +478,6 @@ async function waitForMainScrollableElement() {
     observer.observe(document.documentElement, { childList: true, subtree: true });
   });
 }
-
 
 /********************************************
  * URL CHANGE DETECTION
