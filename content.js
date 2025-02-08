@@ -440,9 +440,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
  * STORAGE FUNCTIONS
  ********************************************/
 function getCurrentChatUrl() {
-  return window.location.href;
+    const url = window.location.href;
+    if (url.includes('/c/')) {
+      // Get the part after "/c/"
+      const parts = url.split('/c/')[1];
+      // Split the string at '?' and '#' and take the first part as the conversation ID
+      const key = parts.split('?')[0].split('#')[0];
+      return key;
+    }
+    // Fallback if "/c/" isn't in the URL
+    return url;
 }
-
 function loadMarkersForCurrentUrl(scrollable) {
   const currentUrl = getCurrentChatUrl();
   chrome.storage.sync.get([currentUrl], data => {

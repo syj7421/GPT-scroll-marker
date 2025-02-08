@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Scroll Marker",
-  "version": "2.0",
+  "version": "2.1",
   "description": "Add bookmarks to scroll positions.",
   "permissions": ["storage"],
   "host_permissions": ["https://chatgpt.com/*"],
