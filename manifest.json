@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "GPT Scroll Marker",
-  "version": "2.1",
-  "description": "Add bookmarks to scroll positions.",
+  "version": "2.3",
+  "description": "Pinpoint important sections in ChatGPT and navigate them instantly. Stop scrolling endlessly!",
   "permissions": ["storage"],
   "host_permissions": ["https://chatgpt.com/*"],
   "action": {
