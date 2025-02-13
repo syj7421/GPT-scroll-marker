@@ -1,10 +1,10 @@
 # ChatGPT Scroll Marker Chrome Extension
 
 ## 🔥 Try it out! 🔥
-Click this link to download this Chrome Extension:
+#### Click this link to download this Chrome Extension:
 [GPT Scroll Marker - Chrome Web Store
 ](https://chromewebstore.google.com/detail/gpt-scroll-marker/iimeacnpfifgmoliimmpannigpfiielk)
-Demonstration Video:
+#### Demonstration Video:
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/SbCpyCoVo10/0.jpg)](https://www.youtube.com/watch?v=SbCpyCoVo10)
 
 ## ❓ Why This Extension?
