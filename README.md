@@ -4,7 +4,7 @@
 Click this link to download this Chrome Extension:
 [GPT Scroll Marker - Chrome Web Store
 ](https://chromewebstore.google.com/detail/gpt-scroll-marker/iimeacnpfifgmoliimmpannigpfiielk)
-[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/SbCpyCoVo10/0.jpg)]
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/SbCpyCoVo10/0.jpg)](https://www.youtube.com/watch?v=SbCpyCoVo10)
 
 ## Why This Extension?
 ChatGPT conversations often get lengthy, making it difficult to revisit key insights or references from past interactions. Manually scrolling back is frustrating and inefficient. This extension provides an easy way to mark important sections in your chat and instantly jump to them later, saving time and improving workflow.
