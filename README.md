@@ -4,7 +4,8 @@
 Click this link to download this Chrome Extension:
 [GPT Scroll Marker - Chrome Web Store
 ](https://chromewebstore.google.com/detail/gpt-scroll-marker/iimeacnpfifgmoliimmpannigpfiielk)
-[![Watch the video](https://www.youtube.com/watch?v=SbCpyCoVo10)
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/SbCpyCoVo10/0.jpg)](https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE)
+
 
 
 ## Why This Extension?
