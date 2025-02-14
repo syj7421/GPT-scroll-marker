@@ -21,11 +21,6 @@ ChatGPT conversations often get lengthy, making it difficult to revisit key insi
 - One Click Navigation – Click a marker to jump instantly to the saved position
 - Per Conversation Storage – Markers persist per chat session, so you don’t lose references when switching between conversations
 
-## What I Learned
-- DOM Manipulation – Dynamically identifying and updating markers inside ChatGPT’s scrollable chat area
-- Chrome Extension APIs – Using chrome.storage.sync to ensure markers persist across devices
-- UX/UI Design – Developing an intuitive, non-intrusive interface with tooltips, draggable controls, and a delete mode
-
 ## 🔑 Key Features
 ### Unique Aspects
 1. Per Conversation Markers
