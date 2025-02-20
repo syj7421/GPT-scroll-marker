@@ -6,14 +6,20 @@
   "permissions": ["storage"],
   "host_permissions": ["https://chatgpt.com/*"],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
     "default_title": "GPT Scroll Marker"
   },
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/*"],
-      "js": ["content.js"],
-      "css": ["content.css"]
+      "js": [
+        "content/config.js",
+        "content/domUtils.js",
+        "content/markerManager.js",
+        "content/uiManager.js",
+        "content/contentScript.js"
+      ],
+      "css": ["content/content.css"]
     }
   ]
 }
