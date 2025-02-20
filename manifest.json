@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
   "name": "GPT Scroll Marker",
-  "version": "2.3",
+  "version": "2.4",
   "description": "Pinpoint important sections in ChatGPT and navigate them instantly. Stop scrolling endlessly!",
   "permissions": ["storage"],
   "host_permissions": ["https://chatgpt.com/*"],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "ChatGPT Scroll Marker"
+    "default_title": "GPT Scroll Marker"
   },
   "content_scripts": [
     {

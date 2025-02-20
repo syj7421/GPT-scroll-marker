@@ -567,3 +567,4 @@ new MutationObserver(() => {
  * START
  ********************************************/
 initMarkers();
+
