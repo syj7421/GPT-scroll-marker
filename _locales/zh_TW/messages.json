@@ -1,0 +1,11 @@
+{
+    "app_name": {
+      "message": "GPT捲動書籤",
+      "description": "name"
+    },
+    "app_description": {
+      "message": "在 ChatGPT 中標示重要區段並立刻導覽。",
+      "description": "description"
+    }
+  }
+  

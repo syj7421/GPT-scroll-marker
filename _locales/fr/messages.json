@@ -1,0 +1,11 @@
+{
+    "app_name": {
+      "message": "Signets de défilement GPT",
+      "description": "name"
+    },
+    "app_description": {
+      "message": "Repérez les sections importantes dans ChatGPT et accédez-y instantanément.",
+      "description": "description"
+    }
+  }
+  

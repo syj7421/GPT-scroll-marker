@@ -1,0 +1,10 @@
+{
+  "app_name": {
+    "message": "GPT Scroll Bookmark",
+    "description": "name"
+  },
+  "app_description": {
+    "message": " important sections in ChatGPT and navigate them instantly. Stop scrolling endlessly!",
+    "description": "description"
+  }
+}

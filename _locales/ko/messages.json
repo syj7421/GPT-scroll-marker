@@ -1,0 +1,11 @@
+{
+    "app_name": {
+      "message": "GPT 스크롤 북마크",
+      "description": "name"
+    },
+    "app_description": {
+      "message": "ChatGPT에서 중요한 구역을 표시하고 즉시 이동하세요.",
+      "description": "description"
+    }
+  }
+  

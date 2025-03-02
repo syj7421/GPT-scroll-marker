@@ -1,0 +1,11 @@
+{
+    "app_name": {
+      "message": "GPT滚动书签",
+      "description": "name"
+    },
+    "app_description": {
+      "message": "在ChatGPT中标注重要部分并立刻导航。",
+      "description": "description"
+    }
+  }
+  

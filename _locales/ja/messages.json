@@ -1,0 +1,11 @@
+{
+    "app_name": {
+      "message": "GPTスクロールブックマーク",
+      "description": "name"
+    },
+    "app_description": {
+      "message": "ChatGPTで重要な部分をマークして、すぐにアクセス。",
+      "description": "description"
+    }
+  }
+  

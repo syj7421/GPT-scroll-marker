@@ -1,0 +1,11 @@
+{
+    "app_name": {
+      "message": "Marcadores de desplazamiento de GPT",
+      "description": "name"
+    },
+    "app_description": {
+      "message": "Identifica secciones importantes en ChatGPT y navega al instante.",
+      "description": "description"
+    }
+  }
+  
