@@ -48,8 +48,10 @@ async function initMarkers() {
 
     // Watch for size/DOM changes to reposition markers
     new ResizeObserver(debounceRepositionMarkers).observe(scrollable);
-    if (scrollable.firstChild) {
-      new MutationObserver(debounceRepositionMarkers).observe(scrollable.firstChild, { childList: true, subtree: true });
+    // WARNING: This part is hardcoded, because I can't think of a fucking better way to get the element, where new articles are inserted to the 
+    // scrollable Element, if gpt website updates, this may change again. 
+    if (scrollable.children[1]) {
+      new MutationObserver(debounceRepositionMarkers).observe(scrollable.children[1], { childList: true, subtree: true });
     }
   });
 }
