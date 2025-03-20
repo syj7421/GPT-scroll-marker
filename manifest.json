@@ -5,6 +5,12 @@
   "description": "__MSG_app_description__",
   "permissions": ["storage"],
   "host_permissions": ["https://chatgpt.com/*"],
+  "icons": {
+    "16": "assets/icons/icon_16.png",
+    "32": "assets/icons/icon_32.png",
+    "48": "assets/icons/icon_48.png",
+    "128": "assets/icons/icon_128.png"
+  },
   "action": {
     "default_icon": {
       "16": "assets/icons/icon_16.png",
