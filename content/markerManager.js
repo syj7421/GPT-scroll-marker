@@ -8,6 +8,7 @@ const MAX_URL_ENTRIES = window.MAX_URL_ENTRIES;
 const CHAT_GPT_SCROLLABLE_SELECTOR = window.CHAT_GPT_SCROLLABLE_SELECTOR;
 const qs = window.qs;
 const qsa = window.qsa;
+const MAX_LABEL_CHARS = 100;
 
 /********************************************
  * INTERNAL STATE
@@ -108,7 +109,7 @@ function createMarkerElement(scrollPosition, ratio, container, storedLabel = '')
 
   const markerLabel = document.createElement('div');
   markerLabel.className = 'marker-label';
-  markerLabel.textContent = storedLabel;
+  markerLabel.textContent = (storedLabel || '').slice(0, MAX_LABEL_CHARS);
   markerLabel.style.visibility = 'hidden';
   markerLabel.style.opacity = '0';
 
@@ -137,21 +138,31 @@ function createMarkerElement(scrollPosition, ratio, container, storedLabel = '')
     markerLabel.focus();
   });
 
-  // Enforce 5-line limit
+  // Enforce 5-line limit and 100-char cap
   const maxLines = 5;
   markerLabel.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       const lines = markerLabel.innerText.split('\n');
-      if (lines.length >= maxLines) {
+      if (lines.length >= maxLines || markerLabel.innerText.length >= MAX_LABEL_CHARS) {
         e.preventDefault();
       }
     }
   });
 
   markerLabel.addEventListener('input', () => {
-    const lines = markerLabel.innerText.split('\n');
+    let text = markerLabel.innerText;
+    const lines = text.split('\n');
+    let changed = false;
     if (lines.length > maxLines) {
-      markerLabel.innerText = lines.slice(0, maxLines).join('\n');
+      text = lines.slice(0, maxLines).join('\n');
+      changed = true;
+    }
+    if (text.length > MAX_LABEL_CHARS) {
+      text = text.slice(0, MAX_LABEL_CHARS);
+      changed = true;
+    }
+    if (changed) {
+      markerLabel.innerText = text;
       const range = document.createRange();
       const selection = window.getSelection();
       range.selectNodeContents(markerLabel);
@@ -257,79 +268,101 @@ window.getCurrentChatUrl = function() {
 
 window.loadMarkersForCurrentUrl = function(scrollable) {
   const currentUrl = window.getCurrentChatUrl();
-  // Load namespaced map and legacy key for migration
-  chrome.storage.sync.get(["markersMap", currentUrl], data => {
-    const map = data.markersMap || {};
-    let stored = map[currentUrl] || [];
-
-    // Migrate legacy storage if present and no namespaced data yet
-    if (!stored.length && Array.isArray(data[currentUrl]) && data[currentUrl].length) {
-      stored = data[currentUrl];
-      const newMap = { ...map, [currentUrl]: stored };
-      chrome.storage.sync.set({ markersMap: newMap }, () => {
-        chrome.storage.sync.remove(currentUrl);
-      });
+  const perChatKey = `mm:${currentUrl}`;
+  // Prefer local storage; migrate from sync if needed
+  chrome.storage.local.get([perChatKey], localData => {
+    const localStored = localData[perChatKey];
+    if (Array.isArray(localStored) && localStored.length) {
+      renderStoredMarkers(localStored, scrollable);
+      return;
     }
 
-    window.markers = [];
+    // Try migrating from sync (per-chat, markersMap, or legacy flat key)
+    chrome.storage.sync.get([perChatKey, "markersMap", currentUrl], syncData => {
+      const map = syncData.markersMap || {};
+      let stored = syncData[perChatKey] || [];
+      if (!stored.length && Array.isArray(map[currentUrl]) && map[currentUrl].length) {
+        stored = map[currentUrl];
+      }
+      if (!stored.length && Array.isArray(syncData[currentUrl]) && syncData[currentUrl].length) {
+        stored = syncData[currentUrl];
+      }
 
-    stored.forEach(m => {
-      const ratio = scrollable.scrollHeight > scrollable.clientHeight
-        ? m.scrollPosition / scrollable.scrollHeight
-        : 0;
-
-      const markerEl = createMarkerElement(m.scrollPosition, ratio, scrollable, m.title);
-      markerEl.style.backgroundColor = window.currentMarkerColor;
-      markerEl.addEventListener('click', e => {
-        e.stopPropagation();
-        if (window.isDeleteMode) {
-          window.deleteMarker(markerEl);
+      if (stored.length) {
+        // Save migrated data to local and clean up sync sources
+        chrome.storage.local.set({ [perChatKey]: stored });
+        const toRemove = [perChatKey, currentUrl];
+        const nextMap = { ...map };
+        delete nextMap[currentUrl];
+        const updates = {};
+        if (Object.keys(nextMap).length) {
+          updates.markersMap = nextMap;
         } else {
-          scrollToPosition(scrollable, m.scrollPosition);
+          toRemove.push('markersMap');
         }
-      });
+        if (Object.keys(updates).length) chrome.storage.sync.set(updates);
+        chrome.storage.sync.remove(toRemove);
+      }
 
-      window.markers.push({
-        marker: markerEl,
-        scrollPosition: m.scrollPosition,
-        ratio
-      });
+      renderStoredMarkers(stored, scrollable);
     });
-
-    window.updateMarkers(scrollable);
-    window.updateDeleteButtonState();
   });
 };
 
+function renderStoredMarkers(stored, scrollable) {
+  window.markers = [];
+  (stored || []).forEach(m => {
+    const ratio = scrollable.scrollHeight > scrollable.clientHeight
+      ? m.scrollPosition / scrollable.scrollHeight
+      : 0;
+
+    const markerEl = createMarkerElement(m.scrollPosition, ratio, scrollable, (m.title || '').slice(0, MAX_LABEL_CHARS));
+    markerEl.style.backgroundColor = window.currentMarkerColor;
+    markerEl.addEventListener('click', e => {
+      e.stopPropagation();
+      if (window.isDeleteMode) {
+        window.deleteMarker(markerEl);
+      } else {
+        scrollToPosition(scrollable, m.scrollPosition);
+      }
+    });
+
+    window.markers.push({
+      marker: markerEl,
+      scrollPosition: m.scrollPosition,
+      ratio
+    });
+  });
+
+  window.updateMarkers(scrollable);
+  window.updateDeleteButtonState();
+}
+
 window.saveMarkersToStorage = function() {
   const currentUrl = window.getCurrentChatUrl();
+  const perChatKey = `mm:${currentUrl}`;
   const dataToStore = window.markers.map(m => {
     const label = qs('.marker-label', m.marker);
     return {
       scrollPosition: m.scrollPosition,
-      title: label ? label.textContent : ''
+      title: label ? (label.textContent || '').slice(0, MAX_LABEL_CHARS) : ''
     };
   });
 
-  chrome.storage.sync.get(["markersMap"], data => {
-    const map = data.markersMap || {};
-    const newMap = { ...map, [currentUrl]: dataToStore };
-    chrome.storage.sync.set({ markersMap: newMap }, () => {
-      checkAndEvictIfNeeded(currentUrl);
-    });
+  chrome.storage.local.set({ [perChatKey]: dataToStore }, () => {
+    checkAndEvictIfNeeded(currentUrl);
   });
 };
 
 function checkAndEvictIfNeeded(currentUrl) {
-  chrome.storage.sync.get(["markersMap"], data => {
-    const map = data.markersMap || {};
-    const keys = Object.keys(map);
-    if (keys.length > MAX_URL_ENTRIES) {
-      // Remove any key other than the current one (basic eviction within namespace)
-      const keyToRemove = keys.find(k => k !== currentUrl) || keys[0];
+  chrome.storage.local.get(null, allData => {
+    const mmPrefix = 'mm:';
+    const mmKeys = Object.keys(allData).filter(k => k.startsWith(mmPrefix));
+    if (mmKeys.length > MAX_URL_ENTRIES) {
+      const currentKey = `${mmPrefix}${currentUrl}`;
+      const keyToRemove = mmKeys.find(k => k !== currentKey) || mmKeys[0];
       if (keyToRemove) {
-        const { [keyToRemove]: _, ...rest } = map;
-        chrome.storage.sync.set({ markersMap: rest });
+        chrome.storage.local.remove(keyToRemove);
       }
     }
   });
