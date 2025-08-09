@@ -22,23 +22,32 @@ document.addEventListener("DOMContentLoaded", () => {
       let isHidden = widgetState;
       hideTheWidgetBtn.textContent = isHidden ? "Show the Widget" : "Hide the Widget";
     
-      // Send the initial widget state to the content script
+      // Send the initial widget state to the content script (only on chatgpt.com)
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: isHidden ? "hide_widget" : "show_widget"
-        });
+        const tab = tabs && tabs[0];
+        if (tab && tab.url && tab.url.startsWith("https://chatgpt.com/")) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: isHidden ? "hide_widget" : "show_widget"
+          });
+        }
       });
     
       // Toggle the widget (hide/show) on button click
       hideTheWidgetBtn.addEventListener("click", () => {
         if (!isHidden) {
           chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, { action: "hide_widget" });
+            const tab = tabs && tabs[0];
+            if (tab && tab.url && tab.url.startsWith("https://chatgpt.com/")) {
+              chrome.tabs.sendMessage(tab.id, { action: "hide_widget" });
+            }
           });
           hideTheWidgetBtn.textContent = "Show the Widget";
         } else {
           chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            chrome.tabs.sendMessage(tabs[0].id, { action: "show_widget" });
+            const tab = tabs && tabs[0];
+            if (tab && tab.url && tab.url.startsWith("https://chatgpt.com/")) {
+              chrome.tabs.sendMessage(tab.id, { action: "show_widget" });
+            }
           });
           hideTheWidgetBtn.textContent = "Hide the Widget";
         }
@@ -62,10 +71,13 @@ document.addEventListener("DOMContentLoaded", () => {
     
       // Notify the content script about the color change so that all markers update
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: "colour_change",
-          color: selectedColor
-        });
+        const tab = tabs && tabs[0];
+        if (tab && tab.url && tab.url.startsWith("https://chatgpt.com/")) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: "colour_change",
+            color: selectedColor
+          });
+        }
       });
     });
   });

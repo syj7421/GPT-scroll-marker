@@ -36,6 +36,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // 3. Setup marker initialization and watchers
+let resizeObserverRef = null;
+let mutationObserverRef = null;
+
 async function initMarkers() {
   const scrollable = await waitForMainScrollableElement();
   // Load the global marker color from storage
@@ -47,12 +50,24 @@ async function initMarkers() {
     window.loadMarkersForCurrentUrl(scrollable);
 
     // Watch for size/DOM changes to reposition markers
-    new ResizeObserver(debounceRepositionMarkers).observe(scrollable);
-    // WARNING: This part is hardcoded, because I can't think of a fucking better way to get the element, where new articles are inserted to the 
-    // scrollable Element, if gpt website updates, this may change again. 
-    if (scrollable.children[1]) {
-      new MutationObserver(debounceRepositionMarkers).observe(scrollable.children[1], { childList: true, subtree: true });
-    }
+    if (resizeObserverRef) resizeObserverRef.disconnect();
+    resizeObserverRef = new ResizeObserver(debounceRepositionMarkers);
+    resizeObserverRef.observe(scrollable);
+
+    // Observe the scrollable container for structural/content changes
+    if (mutationObserverRef) mutationObserverRef.disconnect();
+    const mutationCallback = (records) => {
+      // Ignore mutations originating from our own markers or controls to prevent hover flicker
+      const shouldReposition = records.some(r => {
+        const target = r.target;
+        const insideMarker = target.closest && target.closest('.scroll-marker');
+        const insideControls = window.controlsContainer && window.controlsContainer.contains(target);
+        return !insideMarker && !insideControls;
+      });
+      if (shouldReposition) debounceRepositionMarkers();
+    };
+    mutationObserverRef = new MutationObserver(mutationCallback);
+    mutationObserverRef.observe(scrollable, { childList: true, subtree: true });
   });
 }
 
@@ -82,32 +97,45 @@ function debounceRepositionMarkers() {
 
 // 4. Detect URL changes (e.g., single-page-app style) and re-init
 function handleChatChange() {
+  // Cleanup old observers
+  if (resizeObserverRef) {
+    try { resizeObserverRef.disconnect(); } catch (_) {}
+    resizeObserverRef = null;
+  }
+  if (mutationObserverRef) {
+    try { mutationObserverRef.disconnect(); } catch (_) {}
+    mutationObserverRef = null;
+  }
   window.clearMarkers();
   initMarkers();
 }
 
+// SPA-friendly URL change detection without polling
 let currentLocation = window.location.href;
-setInterval(() => {
+function onUrlMaybeChanged() {
   if (window.location.href !== currentLocation) {
     currentLocation = window.location.href;
     handleChatChange();
   }
-}, 1500);
+}
 
-// 5. Keep the controls/markers in the DOM if the page re-renders
-setInterval(() => {
-  if (window.controlsContainer && !document.body.contains(window.controlsContainer)) {
-    document.body.appendChild(window.controlsContainer);
-  }
-  const scrollable = window.getMainScrollableElement();
-  if (scrollable) {
-    window.markers.forEach(({ marker }) => {
-      if (!scrollable.contains(marker)) {
-        scrollable.appendChild(marker);
-      }
-    });
-  }
-}, 3000);
+// Patch history methods
+const originalPushState = history.pushState;
+history.pushState = function(...args) {
+  const ret = originalPushState.apply(this, args);
+  onUrlMaybeChanged();
+  return ret;
+};
+const originalReplaceState = history.replaceState;
+history.replaceState = function(...args) {
+  const ret = originalReplaceState.apply(this, args);
+  onUrlMaybeChanged();
+  return ret;
+};
+window.addEventListener('popstate', onUrlMaybeChanged);
+
+// Fallback: periodic check in case SPA navigation doesn't trigger popstate
+setInterval(onUrlMaybeChanged, 1500);
 
 new MutationObserver(() => {
   if (window.controlsContainer && !document.body.contains(window.controlsContainer)) {

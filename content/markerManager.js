@@ -109,12 +109,19 @@ function createMarkerElement(scrollPosition, ratio, container, storedLabel = '')
   const markerLabel = document.createElement('div');
   markerLabel.className = 'marker-label';
   markerLabel.textContent = storedLabel;
-  markerLabel.style.display = 'none';
+  markerLabel.style.visibility = 'hidden';
+  markerLabel.style.opacity = '0';
 
-  const showLabel = () => { markerLabel.style.display = 'block'; };
+  const showLabel = () => { 
+    markerLabel.style.visibility = 'visible';
+    markerLabel.style.opacity = '1';
+    marker.classList.add('label-visible');
+  };
   const hideLabel = (e) => {
     if (!marker.contains(e.relatedTarget) && !markerLabel.contains(e.relatedTarget)) {
-      markerLabel.style.display = 'none';
+      markerLabel.style.visibility = 'hidden';
+      markerLabel.style.opacity = '0';
+      marker.classList.remove('label-visible');
     }
   };
 
@@ -231,7 +238,7 @@ window.repositionMarkers = function() {
     m.marker.style.right = `${scrollBarWidth + 5}px`;
     m.marker.style.backgroundColor = window.currentMarkerColor;
   });
-  window.updateMarkers(scrollable);
+  // Avoid removing/re-adding markers during reposition to prevent hover flicker
 };
 
 /********************************************
@@ -250,8 +257,20 @@ window.getCurrentChatUrl = function() {
 
 window.loadMarkersForCurrentUrl = function(scrollable) {
   const currentUrl = window.getCurrentChatUrl();
-  chrome.storage.sync.get([currentUrl], data => {
-    const stored = data[currentUrl] || [];
+  // Load namespaced map and legacy key for migration
+  chrome.storage.sync.get(["markersMap", currentUrl], data => {
+    const map = data.markersMap || {};
+    let stored = map[currentUrl] || [];
+
+    // Migrate legacy storage if present and no namespaced data yet
+    if (!stored.length && Array.isArray(data[currentUrl]) && data[currentUrl].length) {
+      stored = data[currentUrl];
+      const newMap = { ...map, [currentUrl]: stored };
+      chrome.storage.sync.set({ markersMap: newMap }, () => {
+        chrome.storage.sync.remove(currentUrl);
+      });
+    }
+
     window.markers = [];
 
     stored.forEach(m => {
@@ -291,18 +310,28 @@ window.saveMarkersToStorage = function() {
       title: label ? label.textContent : ''
     };
   });
-  chrome.storage.sync.set({ [currentUrl]: dataToStore }, () => {
-    checkAndEvictIfNeeded(currentUrl);
+
+  chrome.storage.sync.get(["markersMap"], data => {
+    const map = data.markersMap || {};
+    const newMap = { ...map, [currentUrl]: dataToStore };
+    chrome.storage.sync.set({ markersMap: newMap }, () => {
+      checkAndEvictIfNeeded(currentUrl);
+    });
   });
 };
 
 function checkAndEvictIfNeeded(currentUrl) {
-  chrome.storage.sync.get(null, allData => {
-    const keys = Object.keys(allData);
+  chrome.storage.sync.get(["markersMap"], data => {
+    const map = data.markersMap || {};
+    const keys = Object.keys(map);
     if (keys.length > MAX_URL_ENTRIES) {
-      // Remove the oldest key (very basic eviction)
-      const keyToRemove = (keys[0] === currentUrl && keys.length > 1) ? keys[1] : keys[0];
-      chrome.storage.sync.remove(keyToRemove);
+      // Remove any key other than the current one (basic eviction within namespace)
+      const keyToRemove = keys.find(k => k !== currentUrl) || keys[0];
+      if (keyToRemove) {
+        const { [keyToRemove]: _, ...rest } = map;
+        chrome.storage.sync.set({ markersMap: rest });
+      }
     }
   });
 }
+

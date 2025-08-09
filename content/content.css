@@ -70,8 +70,9 @@
     transition: transform 0.2s, opacity 0.2s;
 }
 
-.scroll-marker:hover {
-    transform: scale(1.2);
+.scroll-marker:hover,
+.scroll-marker.label-visible {
+    transform: scale(1.1);
     opacity: 0.9;
 }
 
@@ -97,19 +98,22 @@
 }
 
 .marker-label {
-background-color: black;
-color: white;
-padding: 5px 8px;
-font-size: 12px;
-border-radius: 4px;
-position: absolute;
-white-space: nowrap;
-cursor: text;
-display: none; /* initially hidden */
-/* Position the label to the left of its parent marker */
-right: 100%;
-top: 50%;
-transform: translate(-5px, -50%);
+ background-color: black;
+ color: white;
+ padding: 5px 8px;
+ font-size: 12px;
+ border-radius: 4px;
+ position: absolute;
+ white-space: nowrap;
+ cursor: text;
+ /* use visibility/opacity so layout doesn't thrash */
+ visibility: hidden;
+ opacity: 0;
+ transition: opacity 0.1s ease-in-out, visibility 0s linear 0.1s;
+ /* Position the label to the left of its parent marker */
+ right: 100%;
+ top: 50%;
+ transform: translate(-5px, -50%);
 }
   
 .marker-label::after {
@@ -123,11 +127,4 @@ border-style: solid;
 border-color: transparent transparent transparent black;
 }
 
-
-button {
-    position: relative;
-    margin: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
+ 
