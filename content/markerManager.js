@@ -284,7 +284,7 @@ window.loadMarkersForCurrentUrl = function(scrollable) {
     }
 
     // Try migrating from sync (per-chat, markersMap, or legacy flat key)
-    chrome.storage.sync.get([perChatKey, "markersMap", currentUrl], syncData => {
+    chrome.storage.local.get([perChatKey, "markersMap", currentUrl], syncData => {
       const map = syncData.markersMap || {};
       let stored = syncData[perChatKey] || [];
       if (!stored.length && Array.isArray(map[currentUrl]) && map[currentUrl].length) {

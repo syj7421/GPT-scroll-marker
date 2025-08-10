@@ -25,9 +25,8 @@ ChatGPT conversations often get lengthy, making it difficult to revisit key insi
 ### Unique Aspects
 1. Per Conversation Markers
   - Detects a unique URL key for each ChatGPT chat, ensuring that markers are saved only for that specific conversation
-2. Cloud Sync Across Devices
-  - Uses chrome.storage.sync to keep markers stored across multiple Chrome browsers, making them available on any device
-3. Effortless Navigation
+
+2. Effortless Navigation
   - Click markers to scroll instantly to saved positions
   - Edit labels (up to 5 lines) for quick reference
   - One-click delete mode to remove unwanted markers
