@@ -124,6 +124,13 @@ function handleChatChange() {
     if (labelsBtn) {
       labelsBtn.classList.remove('active');
     }
+
+    qsa('button', window.controlsContainer).forEach(btn => {
+      if (!btn.classList.contains('delete-btn')) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    });
   }
   
   window.clearMarkers();

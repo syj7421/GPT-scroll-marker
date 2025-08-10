@@ -4,7 +4,7 @@
       "description": "name"
     },
     "app_description": {
-      "message": "在 ChatGPT 中標示重要區段並立刻導覽。",
+      "message": "在ChatGPT中標示重要區段並立刻導覽。",
       "description": "description"
     }
   }
