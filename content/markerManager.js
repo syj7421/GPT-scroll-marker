@@ -114,11 +114,17 @@ function createMarkerElement(scrollPosition, ratio, container, storedLabel = '')
   markerLabel.style.opacity = '0';
 
   const showLabel = () => { 
+    // Don't show label if "Show all labels" is active
+    if (window.areAllLabelsVisible) return;
+    
     markerLabel.style.visibility = 'visible';
     markerLabel.style.opacity = '1';
     marker.classList.add('label-visible');
   };
   const hideLabel = (e) => {
+    // Don't hide label if "Show all labels" is active
+    if (window.areAllLabelsVisible) return;
+    
     if (!marker.contains(e.relatedTarget) && !markerLabel.contains(e.relatedTarget)) {
       markerLabel.style.visibility = 'hidden';
       markerLabel.style.opacity = '0';
@@ -300,8 +306,8 @@ window.loadMarkersForCurrentUrl = function(scrollable) {
         } else {
           toRemove.push('markersMap');
         }
-        if (Object.keys(updates).length) chrome.storage.sync.set(updates);
-        chrome.storage.sync.remove(toRemove);
+        if (Object.keys(updates).length) chrome.storage.local.set(updates);
+        chrome.storage.local.remove(toRemove);
       }
 
       renderStoredMarkers(stored, scrollable);

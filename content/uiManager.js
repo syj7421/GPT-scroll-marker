@@ -4,6 +4,7 @@
 
 window.controlsContainer = null;
 window.tooltip = null;
+window.areAllLabelsVisible = false;
 
 /**
  * Initializes the floating UI container, tooltip, and control buttons.
@@ -32,6 +33,15 @@ window.initUI = function() {
       action: window.handleCreateMarker,
       className: 'create-btn',
       tooltip: 'Add a marker at the current position'
+    },
+    {
+      label: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
+                <path fill="currentColor" d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                <path fill="currentColor" d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+              </svg>`,
+      action: window.toggleAllLabels,
+      className: 'labels-btn',
+      tooltip: 'Show/hide all marker labels'
     },
     {
       label: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16">
@@ -95,6 +105,7 @@ function hideTooltip() {
 window.toggleDeleteMode = function() {
   window.isDeleteMode = !window.isDeleteMode;
   const deleteBtn = qs('.delete-btn', window.controlsContainer);
+  deleteBtn.classList.remove('active');
   deleteBtn.classList.toggle('active', window.isDeleteMode);
 
   // Disable other buttons while in delete mode
@@ -104,6 +115,11 @@ window.toggleDeleteMode = function() {
       btn.style.opacity = window.isDeleteMode ? '0.5' : '1';
     }
   });
+  
+  // If turning off delete mode, also turn off labels if they were on
+  if (!window.isDeleteMode && window.areAllLabelsVisible) {
+    window.toggleAllLabels();
+  }
 };
 
 /**
@@ -125,6 +141,38 @@ window.updateDeleteButtonState = function() {
         btn.disabled = false;
         btn.style.opacity = '1';
       }
+    });
+  }
+};
+
+/**
+ * Toggles the visibility of all marker labels on the page.
+ */
+window.toggleAllLabels = function() {
+  const labelsBtn = qs('.labels-btn', window.controlsContainer);
+  const isActive = labelsBtn.classList.contains('active');
+  
+  if (isActive) {
+    // Hide all labels
+    labelsBtn.classList.remove('active');
+    window.areAllLabelsVisible = false;
+    qsa('.marker-label').forEach(label => {
+      label.style.visibility = 'hidden';
+      label.style.opacity = '0';
+    });
+    qsa('.scroll-marker').forEach(marker => {
+      marker.classList.remove('label-visible');
+    });
+  } else {
+    // Show all labels
+    labelsBtn.classList.add('active');
+    window.areAllLabelsVisible = true;
+    qsa('.marker-label').forEach(label => {
+      label.style.visibility = 'visible';
+      label.style.opacity = '1';
+    });
+    qsa('.scroll-marker').forEach(marker => {
+      marker.classList.add('label-visible');
     });
   }
 };

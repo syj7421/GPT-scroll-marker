@@ -84,6 +84,14 @@
     transition: background-color 0.3s, box-shadow 0.3s;
 }
 
+/* Labels Button */
+.labels-btn.active {
+    background-color: rgba(33, 150, 243, 0.7);
+    color: white;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+    transition: background-color 0.3s, box-shadow 0.3s;
+}
+
 .tooltip {
     position: absolute;
     display: none;

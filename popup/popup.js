@@ -4,7 +4,7 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     // Retrieve stored widget state and selected color from storage
-    chrome.storage.sync.get(["selectedColor", "isWidgetHidden"], (data) => {
+    chrome.storage.local.get(["selectedColor", "isWidgetHidden"], (data) => {
       const storedColor = data.selectedColor || "#1385ff"; // default color
       const widgetState = data.isWidgetHidden || false;
     
@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
           hideTheWidgetBtn.textContent = "Hide the Widget";
         }
         isHidden = !isHidden;
-        chrome.storage.sync.set({ isWidgetHidden: isHidden });
+        chrome.storage.local.set({ isWidgetHidden: isHidden });
       });
     });
     
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
       hideTheWidgetBtn.style.backgroundColor = selectedColor;
     
       // Save the selected color in storage so that it persists
-      chrome.storage.sync.set({ selectedColor });
+      chrome.storage.local.set({ selectedColor });
     
       // Notify the content script about the color change so that all markers update
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {

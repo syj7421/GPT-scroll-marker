@@ -42,7 +42,7 @@ let mutationObserverRef = null;
 async function initMarkers() {
   const scrollable = await waitForMainScrollableElement();
   // Load the global marker color from storage
-  chrome.storage.sync.get(["selectedColor"], data => {
+  chrome.storage.local.get(["selectedColor"], data => {
     if (data.selectedColor) {
       window.currentMarkerColor = data.selectedColor;
     }
@@ -106,6 +106,26 @@ function handleChatChange() {
     try { mutationObserverRef.disconnect(); } catch (_) {}
     mutationObserverRef = null;
   }
+  
+  // Reset UI state (delete mode and labels visibility)
+  if (window.controlsContainer) {
+    // Reset delete mode
+    if (window.isDeleteMode) {
+      window.isDeleteMode = false;
+      const deleteBtn = window.qs('.delete-btn', window.controlsContainer);
+      if (deleteBtn) {
+        deleteBtn.classList.remove('active');
+      }
+    }
+    
+    // Reset labels button state
+    window.areAllLabelsVisible = false;
+    const labelsBtn = window.qs('.labels-btn', window.controlsContainer);
+    if (labelsBtn) {
+      labelsBtn.classList.remove('active');
+    }
+  }
+  
   window.clearMarkers();
   initMarkers();
 }
