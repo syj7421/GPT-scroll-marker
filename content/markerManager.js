@@ -92,6 +92,7 @@ window.handleCreateMarker = function() {
   window.markers.push({ marker: markerEl, scrollPosition, ratio });
   window.updateMarkers(scrollable);
   window.updateDeleteButtonState(); // Called to refresh the UI state
+  window.updateLabelsButtonState(); 
   window.saveMarkersToStorage();
 };
 
@@ -191,6 +192,7 @@ window.deleteMarker = function(markerEl) {
   window.markers = window.markers.filter(m => m.marker !== markerEl);
   markerEl.remove();
   window.updateDeleteButtonState();
+  window.updateLabelsButtonState(); 
   window.saveMarkersToStorage();
 };
 
@@ -240,6 +242,7 @@ window.clearMarkers = function() {
   window.markers = [];
   window.currentMarkerIndex = 0;
   window.updateDeleteButtonState();
+  window.updateLabelsButtonState(); 
 };
 
 window.repositionMarkers = function() {
@@ -342,6 +345,7 @@ function renderStoredMarkers(stored, scrollable) {
 
   window.updateMarkers(scrollable);
   window.updateDeleteButtonState();
+  window.updateLabelsButtonState(); 
 }
 
 window.saveMarkersToStorage = function() {
@@ -354,10 +358,17 @@ window.saveMarkersToStorage = function() {
       title: label ? (label.textContent || '').slice(0, MAX_LABEL_CHARS) : ''
     };
   });
-
-  chrome.storage.local.set({ [perChatKey]: dataToStore }, () => {
-    checkAndEvictIfNeeded(currentUrl);
-  });
+  try {
+    chrome.storage?.local?.set({ [perChatKey]: dataToStore }, () => {
+      if (chrome.runtime.lastError) {
+        console.warn('Storage error:', chrome.runtime.lastError);
+      } else {
+        checkAndEvictIfNeeded(currentUrl);
+      }
+    });
+  } catch (err) {
+    console.warn('Extension context invalidated:', err);
+  }
 };
 
 function checkAndEvictIfNeeded(currentUrl) {

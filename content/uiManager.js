@@ -145,6 +145,26 @@ window.updateDeleteButtonState = function() {
   }
 };
 
+window.updateLabelsButtonState = function() {
+  const deleteBtn = qs('.labels-btn', window.controlsContainer);
+  const noMarkers = window.markers.length === 0;
+  deleteBtn.disabled = noMarkers;
+  deleteBtn.style.opacity = noMarkers ? '0.5' : '1';
+
+  if (noMarkers && window.isDeleteMode) {
+    // Turn off delete mode if we have no markers left
+    window.isDeleteMode = false;
+    deleteBtn.classList.remove('active');
+    qsa('button', window.controlsContainer).forEach(btn => {
+      if (!btn.classList.contains('delete-btn')) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    });
+  }
+};
+
+
 /**
  * Toggles the visibility of all marker labels on the page.
  */
