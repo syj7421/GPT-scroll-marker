@@ -46,7 +46,7 @@ async function initMarkers() {
     if (data.selectedColor) {
       window.currentMarkerColor = data.selectedColor;
     }
-    // Now load markers for this page
+    // Now load markers for this page (markerManager.js 내부에서 앵커 기반 복원)
     window.loadMarkersForCurrentUrl(scrollable);
 
     // Watch for size/DOM changes to reposition markers
@@ -54,7 +54,7 @@ async function initMarkers() {
     resizeObserverRef = new ResizeObserver(debounceRepositionMarkers);
     resizeObserverRef.observe(scrollable);
 
-    // Observe the scrollable container for structural/content changes
+    // Observe the scrollable container for structural/content/attribute changes
     if (mutationObserverRef) mutationObserverRef.disconnect();
     const mutationCallback = (records) => {
       // Ignore mutations originating from our own markers or controls to prevent hover flicker
@@ -67,7 +67,13 @@ async function initMarkers() {
       if (shouldReposition) debounceRepositionMarkers();
     };
     mutationObserverRef = new MutationObserver(mutationCallback);
-    mutationObserverRef.observe(scrollable, { childList: true, subtree: true });
+    mutationObserverRef.observe(scrollable, {
+      childList: true,
+      subtree: true,
+      // folding/expansion, style changes 등을 잡기 위해 attributes도 관찰
+      attributes: true,
+      attributeFilter: ['class', 'style', 'open', 'aria-expanded', 'data-state']
+    });
   });
 }
 
@@ -125,7 +131,7 @@ function handleChatChange() {
       labelsBtn.classList.remove('active');
     }
 
-    qsa('button', window.controlsContainer).forEach(btn => {
+    window.qsa('button', window.controlsContainer).forEach(btn => {
       if (!btn.classList.contains('delete-btn')) {
         btn.disabled = false;
         btn.style.opacity = '1';

@@ -13,7 +13,17 @@ const MAX_LABEL_CHARS = 100;
 /********************************************
  * INTERNAL STATE
  ********************************************/
-window.markers = [];             // Holds marker objects: { marker: <DOMElement>, scrollPosition, ratio }
+/**
+ * Marker object shape (업데이트):
+ * {
+ *   marker: <DOMButton>,
+ *   scrollPosition: number,      // absolute px (cache)
+ *   ratio: number,               // for UI top% only
+ *   anchor: { type:'article', id: string } | null, // <article data-turn-id="...">
+ *   localOffset: number          // px offset from article top
+ * }
+ */
+window.markers = [];
 window.currentMarkerIndex = 0;
 window.isDeleteMode = false;
 window.currentMarkerColor = "#1385ff";
@@ -60,6 +70,56 @@ window.getMainScrollableElement = function() {
 };
 
 /********************************************
+ * ANCHOR HELPERS (article + local offset)
+ ********************************************/
+
+// 컨테이너 좌표계 기준 element의 top(px)
+function topWithinScrollable(scrollable, el) {
+  const baseTop = scrollable.getBoundingClientRect().top;
+  const rectTop = el.getBoundingClientRect().top;
+  return Math.round(rectTop - baseTop + scrollable.scrollTop);
+}
+
+// 스크롤탑(혹은 중앙)을 기준으로 가장 가까운 <article[data-turn-id]> 찾기
+function findNearestArticle(scrollable, mode = 'top') {
+  const articles = Array.from(scrollable.querySelectorAll('article[data-turn-id]'))
+    .filter(a => a.offsetParent !== null && a.getBoundingClientRect().height > 0);
+
+  if (!articles.length) return null;
+
+  const topNow = scrollable.scrollTop;
+  const ref = (mode === 'center') ? (topNow + scrollable.clientHeight / 2) : topNow;
+
+  let best = null;
+  let bestDist = Infinity;
+
+  for (const a of articles) {
+    const at = topWithinScrollable(scrollable, a);
+    const d = Math.abs(at - ref);
+    if (d < bestDist) {
+      bestDist = d;
+      best = { el: a, id: a.getAttribute('data-turn-id'), top: at, dist: d };
+    }
+  }
+  return best; // { el, id, top, dist }
+}
+
+// 앵커 + 로컬오프셋 → 현재 절대 좌표(px) 환산
+function resolveMarkerAbsoluteTop(scrollable, m) {
+  if (m?.anchor?.type === 'article' && m.anchor.id) {
+    const sel = `article[data-turn-id="${CSS.escape(m.anchor.id)}"]`;
+    const a = scrollable.querySelector(sel);
+    if (a) {
+      const aTop = topWithinScrollable(scrollable, a);
+      const offset = Number.isFinite(m.localOffset) ? m.localOffset : 0;
+      return Math.max(0, aTop + offset);
+    }
+  }
+  // 폴백: 앵커를 못 찾을 때(아직 lazy-load 전 등) 최근 캐시/구버전 절대값 사용
+  return m?.scrollPosition || 0;
+}
+
+/********************************************
  * MARKER CREATION, LABEL & DELETION
  ********************************************/
 window.handleCreateMarker = function() {
@@ -72,11 +132,17 @@ window.handleCreateMarker = function() {
   }
 
   const scrollPosition = scrollable.scrollTop;
+
+  // 가장 가까운 article 앵커와 로컬 오프셋(px)
+  const nearest = findNearestArticle(scrollable, 'top');
+  const anchor = nearest ? { type: 'article', id: nearest.id } : null;
+  const localOffset = nearest ? (scrollPosition - nearest.top) : 0;
+
   const ratio = scrollable.scrollHeight > scrollable.clientHeight
     ? scrollPosition / scrollable.scrollHeight
     : 0;
 
-  // Prevent duplicate markers (within 5px tolerance)
+  // Prevent duplicate markers (within 5px tolerance) - 절대좌표 기준
   if (window.markers.some(m => Math.abs(m.scrollPosition - scrollPosition) < 5)) return;
 
   const markerEl = createMarkerElement(scrollPosition, ratio, scrollable);
@@ -85,13 +151,15 @@ window.handleCreateMarker = function() {
     if (window.isDeleteMode) {
       window.deleteMarker(markerEl);
     } else {
-      scrollToPosition(scrollable, scrollPosition);
+      const entry = window.markers.find(m => m.marker === markerEl);
+      const target = resolveMarkerAbsoluteTop(scrollable, entry);
+      scrollToPosition(scrollable, target);
     }
   });
 
-  window.markers.push({ marker: markerEl, scrollPosition, ratio });
+  window.markers.push({ marker: markerEl, scrollPosition, ratio, anchor, localOffset });
   window.updateMarkers(scrollable);
-  window.updateDeleteButtonState(); // Called to refresh the UI state
+  window.updateDeleteButtonState();
   window.updateLabelsButtonState(); 
   window.saveMarkersToStorage();
 };
@@ -115,17 +183,13 @@ function createMarkerElement(scrollPosition, ratio, container, storedLabel = '')
   markerLabel.style.opacity = '0';
 
   const showLabel = () => { 
-    // Don't show label if "Show all labels" is active
     if (window.areAllLabelsVisible) return;
-    
     markerLabel.style.visibility = 'visible';
     markerLabel.style.opacity = '1';
     marker.classList.add('label-visible');
   };
   const hideLabel = (e) => {
-    // Don't hide label if "Show all labels" is active
     if (window.areAllLabelsVisible) return;
-    
     if (!marker.contains(e.relatedTarget) && !markerLabel.contains(e.relatedTarget)) {
       markerLabel.style.visibility = 'hidden';
       markerLabel.style.opacity = '0';
@@ -198,6 +262,7 @@ window.deleteMarker = function(markerEl) {
 
 window.updateMarkers = function(container) {
   if (!container) return;
+  // 표시용 정렬은 절대 좌표 캐시 기준
   window.markers.sort((a, b) => a.scrollPosition - b.scrollPosition);
   qsa('.scroll-marker', container).forEach(el => el.remove());
   window.markers.forEach(m => container.appendChild(m.marker));
@@ -214,7 +279,9 @@ window.navigateMarkers = function(direction) {
 
   const scrollable = window.getMainScrollableElement();
   if (scrollable) {
-    const { scrollPosition } = window.markers[window.currentMarkerIndex];
+    const entry = window.markers[window.currentMarkerIndex];
+    const scrollPosition = resolveMarkerAbsoluteTop(scrollable, entry);
+
     // Scroll if marker is off-screen
     if (
       scrollPosition < scrollable.scrollTop ||
@@ -252,6 +319,9 @@ window.repositionMarkers = function() {
   const scrollBarWidth = offsetWidth - clientWidth;
 
   window.markers.forEach(m => {
+    // ★ 앵커 기반으로 현재 절대 좌표 재산출 (핵심)
+    m.scrollPosition = resolveMarkerAbsoluteTop(scrollable, m);
+
     const ratio = scrollHeight > clientHeight ? m.scrollPosition / scrollHeight : 0;
     m.ratio = ratio;
     m.marker.style.top = `${ratio * 100}%`;
@@ -321,25 +391,36 @@ window.loadMarkersForCurrentUrl = function(scrollable) {
 function renderStoredMarkers(stored, scrollable) {
   window.markers = [];
   (stored || []).forEach(m => {
+    // 앵커가 있으면 현재 레이아웃 기준 절대 좌표로 복원
+    let sp = resolveMarkerAbsoluteTop(scrollable, {
+      anchor: m.anchor || null,
+      localOffset: m.localOffset || 0,
+      scrollPosition: m.scrollPosition || 0
+    });
+
     const ratio = scrollable.scrollHeight > scrollable.clientHeight
-      ? m.scrollPosition / scrollable.scrollHeight
+      ? sp / scrollable.scrollHeight
       : 0;
 
-    const markerEl = createMarkerElement(m.scrollPosition, ratio, scrollable, (m.title || '').slice(0, MAX_LABEL_CHARS));
+    const markerEl = createMarkerElement(sp, ratio, scrollable, (m.title || '').slice(0, MAX_LABEL_CHARS));
     markerEl.style.backgroundColor = window.currentMarkerColor;
     markerEl.addEventListener('click', e => {
       e.stopPropagation();
       if (window.isDeleteMode) {
         window.deleteMarker(markerEl);
       } else {
-        scrollToPosition(scrollable, m.scrollPosition);
+        const entry = window.markers.find(x => x.marker === markerEl);
+        const target = resolveMarkerAbsoluteTop(scrollable, entry);
+        scrollToPosition(scrollable, target);
       }
     });
 
     window.markers.push({
       marker: markerEl,
-      scrollPosition: m.scrollPosition,
-      ratio
+      scrollPosition: sp,
+      ratio,
+      anchor: m.anchor || null,
+      localOffset: m.localOffset || 0
     });
   });
 
@@ -354,7 +435,9 @@ window.saveMarkersToStorage = function() {
   const dataToStore = window.markers.map(m => {
     const label = qs('.marker-label', m.marker);
     return {
-      scrollPosition: m.scrollPosition,
+      scrollPosition: m.scrollPosition, // cache/compat
+      anchor: m.anchor || null,
+      localOffset: Number.isFinite(m.localOffset) ? m.localOffset : 0,
       title: label ? (label.textContent || '').slice(0, MAX_LABEL_CHARS) : ''
     };
   });
@@ -384,4 +467,3 @@ function checkAndEvictIfNeeded(currentUrl) {
     }
   });
 }
-
